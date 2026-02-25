@@ -1,4 +1,4 @@
-# Gereksinim Dağılımları
+# Tüm Gereksinimler 
 
 ## 1. Emircan Bartan'ın Gereksinimleri
 * **Kullanıcı Kaydı**
@@ -33,3 +33,8 @@
 * **Geçmiş Maçları Listeleme**
 * **Maç Arama**
 * **Tahmin Silme (Yapay Zekâ)**
+
+# Gereksinim Dağılımları
+1. [Emircan Bartan'ın Gereksinimleri](Emircan Bartan/Emircan-Bartan-Gereksinimler.md)
+2. [Murat Koçgürbüz'ün Gereksinimleri](Murat Koçgürbüz/Murat-Koçgürbüz-Gereksinimler.md)
+3. [Onur Eken'in Gereksinimleri](Onur Eken/Onur-Eken-Gereksinimler.md)

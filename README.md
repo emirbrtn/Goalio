@@ -49,3 +49,12 @@ Kısacası Goalio; canlı skor takibi, takım aidiyeti ve veri bilimi tabanlı t
 5. [Mobil Backend](MobilBackEnd.md)
 6. [Video Sunum](Sunum.md)
 
+### Kendi Reponuzu Oluşturma ve Şablonu Ekleme
+**Adım 1: Bu Şablon Repoyu Klonlama**
+1. Bu (Goalio şablon) repoyu yerel bilgisayarınıza klonlayın:
+```bash
+git clone https://github.com/emirbrtn/Goalio.git
+```
+**Adım 2: Kendi Reponuza Ekleme**
+1. Kendi reponuzu da git clone ile çekerek Goalio şablonunu içine ekleyin.
+2. Böylece şablon projenin tüm içeriği kendi reponuza kopyalanmış olur.
