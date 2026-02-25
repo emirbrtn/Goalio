@@ -1,7 +1,7 @@
 # Goalio
 
 ## Proje Hakkında
-![Ürün Tanıtım Görseli](Product.png)
+![Ürün Tanıtım Görseli](Product1.png)
 
 **Proje Tanımı:**
 Goalio – Maç takip ve tahmin uygulaması
