@@ -28,3 +28,8 @@ Onur Eken
  Geçmiş Maçları Listeleme   
  Maç Arama 
  Tahmin Silme (Yapay Zekâ)
+
+# Gereksinim Dağılımları
+1. [Emircan Bartan'ın Gereksinimleri]
+2. [Murat Koçgürbüz'ün Gereksinimleri]
+3. [Onur Eken'in Gereksinimleri]
