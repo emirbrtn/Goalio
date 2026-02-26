@@ -19,7 +19,7 @@
 * **Lig Bazlı Maç Listeleme**
 * **Maç Detayı Görüntüleme**
 * **Takım Bilgisi Görüntüleme**
-* **Lig Bilgisi Görüntüleme**
+* **Favori Takım Silme**
 * **Tahmin Oluşturma (Yapay Zekâ)**
 
 ---
