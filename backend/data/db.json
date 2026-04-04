@@ -1,0 +1,156 @@
+{
+  "users": [
+    {
+      "id": "53gXncyarnpwv0Pn9HVLx",
+      "username": "onur",
+      "email": "onur@gmail.com",
+      "passwordHash": "$2a$10$CDXpALzXlZEOCJ.FpBH8Fely4XBiwEUnhIBfDWBuWEP4GXmvJ0ZMG",
+      "favorites": [],
+      "createdOn": "2026-04-02T21:07:50.284Z",
+      "avatarId": "keeper",
+      "favoriteTeams": [
+        {
+          "name": "Galatasaray",
+          "logo": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+        }
+      ],
+      "favoritePlayers": [
+        {
+          "name": "Wilfried Singo",
+          "image": "https://cdn.sportmonks.com/images/soccer/players/2/31640130.png",
+          "jersey_number": 90,
+          "teamName": "Galatasaray"
+        },
+        {
+          "name": "Mauro Icardi",
+          "image": "https://cdn.sportmonks.com/images/soccer/players/7/129095.png",
+          "jersey_number": 9,
+          "teamName": "Galatasaray"
+        },
+        {
+          "name": "Sacha Boey",
+          "image": "https://cdn.sportmonks.com/images/soccer/players/0/12036864.png",
+          "jersey_number": 93,
+          "teamName": "Galatasaray"
+        },
+        {
+          "name": "Victor Osimhen",
+          "image": "https://cdn.sportmonks.com/images/soccer/players/29/455805.png",
+          "jersey_number": 45,
+          "teamName": "Galatasaray"
+        }
+      ]
+    },
+    {
+      "id": "tXn9JiyN54h2YnRTXXR-r",
+      "username": "emo1",
+      "email": "emo@gmail.com",
+      "passwordHash": "$2a$10$0YgtaA6mkz52oK6TJdstBOptmFq8Lr6HxB.bQjPop8Saa5xQfNqEq",
+      "avatarId": "captain",
+      "favorites": [],
+      "notifications": {
+        "predictionResolved": true,
+        "favoriteMatchStart": true,
+        "favoriteMatchResult": true
+      },
+      "createdOn": "2026-04-03T15:12:42.803Z",
+      "favoriteTeams": [
+        {
+          "name": "Rayo Vallecano",
+          "logo": "https://cdn.sportmonks.com/images/soccer/teams/25/377.png"
+        },
+        {
+          "name": "Arsenal",
+          "logo": "https://cdn.sportmonks.com/images/soccer/teams/19/19.png"
+        }
+      ],
+      "favoritePlayers": [
+        {
+          "name": "Luiz Felipe",
+          "image": "https://cdn.sportmonks.com/images/soccer/players/1/132577.png",
+          "jersey_number": 5,
+          "teamName": "Rayo Vallecano"
+        },
+        {
+          "name": "Fran Pérez",
+          "image": "https://cdn.sportmonks.com/images/soccer/players/8/23278664.png",
+          "jersey_number": 21,
+          "teamName": "Rayo Vallecano"
+        },
+        {
+          "name": "Declan Rice",
+          "image": "https://cdn.sportmonks.com/images/soccer/players/25/5273.png",
+          "jersey_number": 41,
+          "teamName": "Arsenal"
+        }
+      ]
+    },
+    {
+      "id": "3FyRCU-G3ugFasr8EbRvJ",
+      "username": "onur1",
+      "email": "sadsakdas@gmail.com",
+      "passwordHash": "$2a$10$8cIvNClnnRSGbYSw7DfEKuSkhAArSii4y866.jjxE2OicnUdUnavK",
+      "avatarId": "captain",
+      "favorites": [],
+      "notifications": {
+        "predictionResolved": true,
+        "favoriteMatchStart": true,
+        "favoriteMatchResult": true
+      },
+      "createdOn": "2026-04-03T15:15:34.541Z"
+    },
+    {
+      "id": "-H1ZTg6rRnUtZINCY1lXY",
+      "username": "ara",
+      "email": "ara@gmail.com",
+      "passwordHash": "$2a$10$EwQfHvNpK/8lvIEIlPEM6OQ/SfmEZmJ7aHcI4TQOmx3XUWjwLrEnS",
+      "avatarId": "captain",
+      "favorites": [],
+      "favoriteTeams": [],
+      "favoritePlayers": [],
+      "notifications": {
+        "predictionResolved": true,
+        "favoriteMatchStart": true,
+        "favoriteMatchResult": true
+      },
+      "createdOn": "2026-04-03T16:38:31.372Z"
+    }
+  ],
+  "userPredictions": [
+    {
+      "id": "ceyJhtKNg9BXH7gpqlYea",
+      "userId": "53gXncyarnpwv0Pn9HVLx",
+      "matchId": "19439545",
+      "predictedResult": "homeWin",
+      "createdOn": "2026-04-03T09:26:33.366Z"
+    },
+    {
+      "id": "d9x1EkJ5XoB1RVmibpCfI",
+      "userId": "53gXncyarnpwv0Pn9HVLx",
+      "matchId": "19443177",
+      "predictedResult": "draw",
+      "createdOn": "2026-04-03T11:46:18.610Z"
+    },
+    {
+      "id": "TWYpx78P_UZV3q3g3qg8w",
+      "userId": "53gXncyarnpwv0Pn9HVLx",
+      "matchId": "19443178",
+      "predictedResult": "homeWin",
+      "createdOn": "2026-04-03T11:46:31.524Z"
+    },
+    {
+      "id": "4L8azeyQgYW-Uqpbf-rHj",
+      "userId": "53gXncyarnpwv0Pn9HVLx",
+      "matchId": "19439544",
+      "predictedResult": "draw",
+      "createdOn": "2026-04-03T11:46:51.823Z"
+    },
+    {
+      "id": "uYXc5kHiz0Mqr8Yrzmy5f",
+      "userId": "tXn9JiyN54h2YnRTXXR-r",
+      "matchId": "19443177",
+      "predictedResult": "homeWin",
+      "createdOn": "2026-04-03T15:13:49.710Z"
+    }
+  ]
+}
