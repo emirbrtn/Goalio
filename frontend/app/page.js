@@ -369,12 +369,16 @@ function HomeContent() {
       setHistoryMatches(safeHistory);
 
       const nextHero = selectHeroMatch(safeAll, safeLive, safeHistory);
+      const resolvedHero =
+        nextHero?.status === "live"
+          ? safeLive.find((match) => String(match?._id) === String(nextHero?._id)) || nextHero
+          : nextHero;
 
-      setHeroMatch(nextHero);
-      if (nextHero?.status === "live" || nextHero?.status === "finished") {
+      setHeroMatch(resolvedHero);
+      if (resolvedHero?.status === "live" || resolvedHero?.status === "finished") {
         setHeroStatsLoading(true);
         try {
-          const heroDetailRes = await fetch(`${apiBase}/matches/${nextHero._id}`, { cache: "no-store" });
+          const heroDetailRes = await fetch(`${apiBase}/matches/${resolvedHero._id}`, { cache: "no-store" });
           if (heroDetailRes.ok) {
             setHeroStatsMatch(await heroDetailRes.json());
           } else {
@@ -390,10 +394,10 @@ function HomeContent() {
         setHeroStatsLoading(false);
       }
 
-      if (nextHero) {
-        if (heroMatchIdRef.current !== String(nextHero._id)) {
-          heroMatchIdRef.current = String(nextHero._id);
-          await tryLoadPrediction(nextHero._id);
+      if (resolvedHero) {
+        if (heroMatchIdRef.current !== String(resolvedHero._id)) {
+          heroMatchIdRef.current = String(resolvedHero._id);
+          await tryLoadPrediction(resolvedHero._id);
         }
       } else {
         heroMatchIdRef.current = null;

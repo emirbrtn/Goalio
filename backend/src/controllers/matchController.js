@@ -3,6 +3,7 @@ const { normalizeMatchState } = require("../utils/matchState");
 
 const memoryCache = {};
 const CACHE_TIME_MS = 2 * 60 * 1000;
+const LIVE_CACHE_TIME_MS = 15 * 1000;
 const LIVE_MATCH_MAX_WINDOW_MS = 150 * 60 * 1000;
 const EXTENDED_LIVE_MATCH_MAX_WINDOW_MS = 210 * 60 * 1000;
 const DEFAULT_MAX_PAGES = 6;
@@ -55,11 +56,11 @@ async function fetchSportsmonksPage(endpoint, page = 1) {
 }
 
 async function fetchFromSportsmonks(endpoint, options = {}) {
-  const { maxPages = 1 } = options;
+  const { maxPages = 1, cacheTimeMs = CACHE_TIME_MS } = options;
   const cacheKey = `${endpoint}::pages=${maxPages}`;
   const now = Date.now();
 
-  if (memoryCache[cacheKey] && now - memoryCache[cacheKey].time < CACHE_TIME_MS) {
+  if (memoryCache[cacheKey] && now - memoryCache[cacheKey].time < cacheTimeMs) {
     return memoryCache[cacheKey].data;
   }
 
@@ -280,7 +281,9 @@ exports.listMatches = async (req, res) => {
 
 exports.listLiveMatches = async (req, res) => {
   try {
-    let apiMatches = await fetchFromSportsmonks("livescores/inplay");
+    let apiMatches = await fetchFromSportsmonks("livescores/inplay", {
+      cacheTimeMs: LIVE_CACHE_TIME_MS,
+    });
     if (!Array.isArray(apiMatches)) apiMatches = apiMatches ? [apiMatches] : [];
 
     const liveMatches = filterByLeague(
