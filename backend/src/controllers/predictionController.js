@@ -214,8 +214,10 @@ function buildNarrativeSummary(primaryOutcome, teams, factors) {
   return [firstSentence, secondSentence, closingSentence].filter(Boolean).join(" ");
 }
 
-async function buildPrediction(matchId) {
-  const cached = predictionCache.get(String(matchId));
+async function buildPrediction(matchId, options = {}) {
+  const { allowStartedSnapshot = false } = options;
+  const cacheKey = `${String(matchId)}:${allowStartedSnapshot ? "hero" : "scheduled"}`;
+  const cached = predictionCache.get(cacheKey);
   if (cached && Date.now() - cached.time < CACHE_TTL_MS) {
     return cached.data;
   }
@@ -226,7 +228,7 @@ async function buildPrediction(matchId) {
   }
 
   const matchStatus = normalizeMatchState(fixture?.state?.state || "NS");
-  if (matchStatus !== "scheduled") {
+  if (!allowStartedSnapshot && matchStatus !== "scheduled") {
     const error = new Error("Prediction only available before kickoff");
     error.status = 400;
     throw error;
@@ -251,6 +253,7 @@ async function buildPrediction(matchId) {
   ]);
 
   const fixtures = (Array.isArray(seasonData?.fixtures) ? seasonData.fixtures : [])
+    .filter((seasonFixture) => String(seasonFixture?.id || "") !== String(matchId))
     .map(mapFinishedFixture)
     .filter(Boolean);
 
@@ -378,7 +381,7 @@ async function buildPrediction(matchId) {
     },
   };
 
-  predictionCache.set(String(matchId), {
+  predictionCache.set(cacheKey, {
     time: Date.now(),
     data: prediction,
   });
@@ -394,6 +397,18 @@ exports.getMatchPrediction = async (req, res) => {
     const status = error.status || 500;
     return res.status(status).json({
       message: status === 400 ? "AI tahmini sadece başlamamış maçlarda üretilir." : "Tahmin getirilemedi.",
+    });
+  }
+};
+
+exports.getHeroPrediction = async (req, res) => {
+  try {
+    const prediction = await buildPrediction(req.params.matchId, { allowStartedSnapshot: true });
+    return res.json(prediction);
+  } catch (error) {
+    const status = error.status || 500;
+    return res.status(status).json({
+      message: "Vitrin tahmini getirilemedi.",
     });
   }
 };

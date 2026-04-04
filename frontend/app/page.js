@@ -600,14 +600,8 @@ function HomeContent() {
     const cachedPrediction = readCachedHeroPrediction(matchId);
     setPrediction(cachedPrediction);
 
-    const token = localStorage.getItem("goalio_token");
-    if (!token) return;
     try {
-      const res = await fetch(`${apiBase}/predictions/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ matchId }),
-      });
+      const res = await fetch(`${apiBase}/predictions/hero/${matchId}`, { cache: "no-store" });
 
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
