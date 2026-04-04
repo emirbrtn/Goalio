@@ -16,10 +16,10 @@ app.get("/", (req, res) => {
   res.json({ message: "Goalio API aktif" });
 });
 
-app.use("/api/users", userRoutes);
-app.use("/api/matches", matchRoutes);
-app.use("/api/teams", teamRoutes);
-app.use("/api/players", playerRoutes);
-app.use("/api/predictions", predictionRoutes);
+app.use("/users", userRoutes);
+app.use("/matches", matchRoutes);
+app.use("/teams", teamRoutes);
+app.use("/players", playerRoutes);
+app.use("/predictions", predictionRoutes);
 
 module.exports = app;
