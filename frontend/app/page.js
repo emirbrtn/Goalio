@@ -1083,8 +1083,6 @@ function AIPredictionCard({ prediction, homeTeam, awayTeam, matchStatus }) {
         { label: awayTeam || "Deplasman", short: "2", value: prediction.awayWin, color: "from-amber-500 to-yellow-300" },
       ]
     : [];
-  const isArchivedPrematchPrediction =
-    Boolean(prediction) && (matchStatus === "live" || matchStatus === "finished");
 
   return (
     <div className="relative flex min-h-[250px] flex-col justify-between overflow-hidden rounded-[32px] border border-blue-500/20 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.22),_transparent_40%),linear-gradient(145deg,#111827,#0b1220)] p-6 shadow-3xl lg:rounded-[40px]">
@@ -1099,12 +1097,6 @@ function AIPredictionCard({ prediction, homeTeam, awayTeam, matchStatus }) {
           <BrainCircuit size={18} className="text-blue-300 animate-pulse" />
         </div>
       </div>
-
-      {isArchivedPrematchPrediction ? (
-        <div className="relative z-10 mt-4 inline-flex w-fit items-center rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-amber-200">
-          Mac oncesi son analiz
-        </div>
-      ) : null}
 
       {prediction ? (
         <div className="relative z-10 grid grid-cols-1 gap-3 sm:grid-cols-3">
