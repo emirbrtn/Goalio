@@ -655,6 +655,8 @@ function HomeContent() {
   const getFormattedDate = (match) => formatMatchDateTime(match.startTime || match.date || match.starting_at) || "-";
 
   const sortedLiveMatches = sortLiveMatches(liveMatches, heroMatch?._id);
+  const recentFinishedMatches = historyMatches.slice(0, 25);
+  const upcomingMatches = allMatches.filter((match) => match.status === "scheduled").slice(0, 25);
 
   const heroHomeScore = heroMatch?.status === "scheduled" ? "-" : (heroMatch?.score?.home ?? 0);
   const heroAwayScore = heroMatch?.status === "scheduled" ? "-" : (heroMatch?.score?.away ?? 0);
@@ -1010,7 +1012,7 @@ function HomeContent() {
             <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
               <AIPredictionCard prediction={prediction} homeTeam={displayHeroHomeTeamName} awayTeam={displayHeroAwayTeamName} matchStatus={heroMatch?.status} />
               <div className="bg-gradient-to-br from-[#1e293b] to-[#2e1065] p-6 rounded-[32px] border border-purple-500/20 shadow-3xl min-h-[250px] flex flex-col lg:rounded-[40px]"><div className="flex items-center justify-between mb-4"><h4 className="text-transparent bg-clip-text bg-gradient-to-br from-white to-[#d4bfa6] font-black text-xl uppercase tracking-tighter italic">İstatistikler</h4><PieChart size={20} className="text-blue-400 opacity-60" /></div><div className="flex-1 flex items-center justify-center">{heroMatch.status === "scheduled" ? <div className="text-center opacity-50"><Activity size={30} className="mx-auto text-blue-400 animate-pulse" /><p className="text-[10px] font-black uppercase tracking-widest mt-2">Maç başladığında aktif olacak</p></div> : heroStatsLoading ? <div className="text-center opacity-70"><Loader2 size={28} className="mx-auto text-blue-400 animate-spin" /><p className="text-[10px] font-black uppercase tracking-widest mt-2">İstatistikler yükleniyor</p></div> : <StatsCard match={heroStatsMatch || heroMatch} compact />}</div></div>
-                <div className="bg-gradient-to-br from-[#1e293b] to-[#2e1065] p-6 rounded-[32px] border border-purple-500/20 shadow-3xl min-h-[250px] flex flex-col justify-between lg:rounded-[40px]"><div className="flex items-center justify-between border-b border-white/5 pb-3"><h4 className="text-transparent bg-clip-text bg-gradient-to-br from-white to-[#d4bfa6] font-black text-xl uppercase tracking-tighter italic">Genel Rapor</h4><Activity size={22} className="text-blue-400 opacity-60" /></div><div className="space-y-4 pt-2"><ReportRow label="Veri Tabanı Hacmi" value={`${allMatches.length} MAÇ`} /><ReportRow label="Aktif Canlı Maç" value={`${liveMatches.length} CANLI`} /><ReportRow label="Arşiv Kaydı" value={`${historyMatches.length} BİTEN`} /></div></div>
+                <div className="bg-gradient-to-br from-[#1e293b] to-[#2e1065] p-6 rounded-[32px] border border-purple-500/20 shadow-3xl min-h-[250px] flex flex-col justify-between lg:rounded-[40px]"><div className="flex items-center justify-between border-b border-white/5 pb-3"><h4 className="text-transparent bg-clip-text bg-gradient-to-br from-white to-[#d4bfa6] font-black text-xl uppercase tracking-tighter italic">Genel Rapor</h4><Activity size={22} className="text-blue-400 opacity-60" /></div><div className="space-y-4 pt-2"><ReportRow label="Veri Tabanı Hacmi" value={`${allMatches.length} MAÇ`} /><ReportRow label="Aktif Canlı Maç" value={`${liveMatches.length} CANLI`} /><ReportRow label="Arşiv Kaydı" value={`${recentFinishedMatches.length} BİTEN`} /></div></div>
             </div>
 
             {liveMatches.length > 0 ? (
@@ -1033,11 +1035,11 @@ function HomeContent() {
               <div className="space-y-6">
                 {null}
                 <h3 className="text-transparent bg-clip-text bg-gradient-to-br from-white to-[#d4bfa6] font-black uppercase tracking-[0.4em] flex items-center gap-4 text-[12px] italic border-l-4 border-blue-500 pl-4"><Award size={18} className="text-blue-500" /> TAMAMLANAN MAÇLAR</h3>
-                <MatchList title="" matches={historyMatches.slice(0, 20)} onTeamSelect={handleQuickTeamOpen} />
+                <MatchList title="" matches={recentFinishedMatches} onTeamSelect={handleQuickTeamOpen} />
               </div>
               <div className="space-y-6">
                 <h3 className="text-transparent bg-clip-text bg-gradient-to-br from-white to-[#d4bfa6] font-black uppercase tracking-[0.4em] flex items-center gap-4 text-[12px] italic border-l-4 border-purple-500 pl-4"><Calendar size={18} className="text-purple-500" /> YAKLAŞAN MAÇLAR</h3>
-                <MatchList title="" matches={allMatches.filter((match) => match.status === "scheduled").slice(0, 20)} onTeamSelect={handleQuickTeamOpen} />
+                <MatchList title="" matches={upcomingMatches} onTeamSelect={handleQuickTeamOpen} />
               </div>
             </div>
           </>
