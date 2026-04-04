@@ -160,13 +160,10 @@ function extractLiveMinute(match) {
       match?.periods?.current?.minute,
     ]),
     extraMinute: firstNumericValue([
-      currentPeriod?.time_added,
       currentPeriod?.extra_minute,
       match?.extra_minute,
       match?.time?.extra_minute,
-      match?.time?.added_time,
       match?.state?.extra_minute,
-      match?.state?.added_time,
       match?.state?.clock?.extra_minute,
       match?.periods?.current?.extra_minute,
     ]),

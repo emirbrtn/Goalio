@@ -261,13 +261,10 @@ export function formatLiveMinute(match) {
   const extraMinute = firstLiveNumber([
     match?.extraMinute,
     match?.extra_minute,
-    currentPeriod?.time_added,
     currentPeriod?.extra_minute,
     match?.sportsmonkData?.extra_minute,
     match?.sportsmonkData?.time?.extra_minute,
-    match?.sportsmonkData?.time?.added_time,
     match?.sportsmonkData?.state?.extra_minute,
-    match?.sportsmonkData?.state?.added_time,
     match?.sportsmonkData?.state?.clock?.extra_minute,
   ]);
   const latestEvent = getLatestEventMinute(match);
@@ -276,10 +273,10 @@ export function formatLiveMinute(match) {
 
   if (isFirstHalfState(rawState) && minute > 45) {
     displayMinute = 45;
-    displayExtraMinute = Math.max(extraMinute, minute - 45);
+    displayExtraMinute = minute - 45;
   } else if (isSecondHalfState(rawState) && minute > 90) {
     displayMinute = 90;
-    displayExtraMinute = Math.max(extraMinute, minute - 90);
+    displayExtraMinute = minute - 90;
   }
 
   if (!minute && !extraMinute) {
