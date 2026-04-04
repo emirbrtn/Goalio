@@ -1,4 +1,5 @@
 const { getLeagueByKey, getAllLeagues } = require("../utils/leagueConfig");
+const { normalizeMatchState } = require("../utils/matchState");
 
 async function fetchSM(endpoint) {
   const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
@@ -47,8 +48,7 @@ function mapLeagueFixture(fixture) {
 
   let status = "scheduled";
   const state = fixture.state?.state || "NS";
-  if (["INPLAY", "HT", "ET", "PEN_LIVE"].includes(state)) status = "live";
-  if (["FT", "AET", "FT_PEN"].includes(state)) status = "finished";
+  status = normalizeMatchState(state);
 
   return {
     _id: String(fixture.id),

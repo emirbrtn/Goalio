@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const UserNotification = require("../models/UserNotification");
 const UserPrediction = require("../models/UserPrediction");
+const { getJwtSecret } = require("../utils/authConfig");
+const { normalizeMatchState } = require("../utils/matchState");
 
 const defaultNotifications = {
   predictionResolved: true,
@@ -29,13 +31,14 @@ const allowedAvatarIds = new Set([
 const defaultAvatarId = "captain";
 const genericAuthErrorMessage =
   "Su anda islem tamamlanamiyor. Lutfen kisa bir sure sonra tekrar deneyin.";
+const allowedPredictionResults = new Set(["homeWin", "draw", "awayWin"]);
 
 const toPublicUserId = (user) => String(user?.legacyId || user?._id || "");
 
 const signToken = (user) =>
   jwt.sign(
     { id: toPublicUserId(user), username: user.username },
-    process.env.JWT_SECRET || "goalio-secret",
+    getJwtSecret(),
     { expiresIn: "7d" },
   );
 
@@ -83,12 +86,6 @@ function sanitizeNotification(notification) {
   };
 }
 
-function normalizeMatchState(state) {
-  if (["INPLAY", "HT", "ET", "PEN_LIVE"].includes(state)) return "live";
-  if (["FT", "AET", "FT_PEN"].includes(state)) return "finished";
-  return "scheduled";
-}
-
 function extractParticipantGoals(scores = [], participantId) {
   const currentScore =
     scores.find(
@@ -113,6 +110,35 @@ async function resolveUser(identifier) {
   }
 
   return null;
+}
+
+async function fetchFixtureForPrediction(matchId) {
+  const token = String(process.env.SPORTSMONKS_API_TOKEN || "").trim();
+
+  if (!token) {
+    const error = new Error("SPORTSMONKS_API_TOKEN missing");
+    error.status = 503;
+    throw error;
+  }
+
+  const response = await fetch(
+    `https://api.sportmonks.com/v3/football/fixtures/${matchId}?api_token=${token}&include=state`,
+  );
+
+  if (!response.ok) {
+    const error = new Error(`Fixture lookup failed: ${response.status}`);
+    error.status = response.status === 404 ? 404 : 503;
+    throw error;
+  }
+
+  const fixture = (await response.json()).data;
+  if (!fixture?.id) {
+    const error = new Error("Fixture not found");
+    error.status = 404;
+    throw error;
+  }
+
+  return fixture;
 }
 
 exports.register = async (req, res) => {
@@ -500,36 +526,60 @@ exports.listUserPredictions = async (req, res) => {
 exports.saveUserPrediction = async (req, res) => {
   if (!requireSameUser(req, res)) return;
 
-  const matchId = String(req.body.matchId || "").trim();
-  if (!matchId) {
-    return res.status(400).json({ message: "Mac kimligi gerekli" });
-  }
+  try {
+    const matchId = String(req.body.matchId || "").trim();
+    const predictedResult = String(req.body.predictedResult || "").trim();
 
-  const existingPrediction = await UserPrediction.findOne({
-    userId: String(req.params.id),
-    matchId,
-  }).lean();
+    if (!matchId) {
+      return res.status(400).json({ message: "Mac kimligi gerekli" });
+    }
 
-  if (existingPrediction) {
-    return res.status(200).json({
-      ...existingPrediction,
-      id: String(existingPrediction.legacyId || existingPrediction._id),
-      _id: String(existingPrediction.legacyId || existingPrediction._id),
+    if (!allowedPredictionResults.has(predictedResult)) {
+      return res.status(400).json({ message: "Gecersiz tahmin secimi" });
+    }
+
+    const fixture = await fetchFixtureForPrediction(matchId);
+    const matchStatus = normalizeMatchState(fixture?.state?.state || "NS");
+    if (matchStatus !== "scheduled") {
+      return res.status(400).json({ message: "Tahmin sadece baslamamis maclar icin kaydedilebilir" });
+    }
+
+    const existingPrediction = await UserPrediction.findOne({
+      userId: String(req.params.id),
+      matchId,
+    }).lean();
+
+    if (existingPrediction) {
+      return res.status(200).json({
+        ...existingPrediction,
+        id: String(existingPrediction.legacyId || existingPrediction._id),
+        _id: String(existingPrediction.legacyId || existingPrediction._id),
+      });
+    }
+
+    const prediction = await UserPrediction.create({
+      userId: String(req.params.id),
+      matchId,
+      predictedResult,
+      createdOn: new Date().toISOString(),
+    });
+
+    return res.status(201).json({
+      ...prediction.toObject(),
+      id: String(prediction.legacyId || prediction._id),
+      _id: String(prediction.legacyId || prediction._id),
+    });
+  } catch (error) {
+    const status = error.status || 500;
+    return res.status(status).json({
+      message:
+        status === 404
+          ? "Mac bulunamadi"
+          : status === 503
+            ? "Mac durumu su anda dogrulanamiyor. Lutfen biraz sonra tekrar deneyin."
+            : "Tahmin kaydedilemedi",
     });
   }
-
-  const prediction = await UserPrediction.create({
-    userId: String(req.params.id),
-    matchId,
-    predictedResult: req.body.predictedResult,
-    createdOn: new Date().toISOString(),
-  });
-
-  return res.status(201).json({
-    ...prediction.toObject(),
-    id: String(prediction.legacyId || prediction._id),
-    _id: String(prediction.legacyId || prediction._id),
-  });
 };
 
 exports.deleteUserPrediction = async (req, res) => {

@@ -3,6 +3,7 @@ const axios = require("axios");
 const matchController = require("../controllers/matchController");
 const { syncLeagueData } = require("../services/syncService");
 const { getAllLeagues } = require("../utils/leagueConfig");
+const { normalizeMatchState } = require("../utils/matchState");
 
 function mapFixture(fixture) {
   const homeTeam =
@@ -20,10 +21,8 @@ function mapFixture(fixture) {
     fixture.scores?.find((score) => score.participant_id === awayTeam.id && score.description === "CURRENT") ||
     {};
 
-  let status = "scheduled";
   const state = fixture.state?.state || "NS";
-  if (["INPLAY", "HT", "ET", "PEN_LIVE"].includes(state)) status = "live";
-  if (["FT", "AET", "FT_PEN"].includes(state)) status = "finished";
+  const status = normalizeMatchState(state);
 
   return {
     _id: String(fixture.id),

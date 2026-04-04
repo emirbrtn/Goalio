@@ -1,29 +1,10 @@
 const { getLeagueByKey } = require("../utils/leagueConfig");
+const { normalizeMatchState } = require("../utils/matchState");
 
 const memoryCache = {};
 const CACHE_TIME_MS = 2 * 60 * 1000;
 const LIVE_MATCH_MAX_WINDOW_MS = 150 * 60 * 1000;
 const EXTENDED_LIVE_MATCH_MAX_WINDOW_MS = 210 * 60 * 1000;
-
-function mapMatchStatus(rawState) {
-  const state = String(rawState || "NS").toUpperCase();
-
-  if (
-    state.startsWith("INPLAY") ||
-    ["HT", "ET", "PEN_LIVE", "BREAK", "INTERRUPTED"].includes(state)
-  ) {
-    return "live";
-  }
-
-  if (
-    state.startsWith("FT") ||
-    ["AET", "FT_PEN", "AFTER_PENALTIES", "AWARDED", "CANCELLED", "POSTPONED"].includes(state)
-  ) {
-    return "finished";
-  }
-
-  return "scheduled";
-}
 
 async function fetchFromSportsmonks(endpoint) {
   const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
@@ -98,7 +79,7 @@ function mapSportsmonksMatch(match) {
     ) || {};
 
   const state = match.state?.state || "NS";
-  const status = mapMatchStatus(state);
+  const status = normalizeMatchState(state);
 
   return {
     _id: String(match.id),
@@ -408,7 +389,7 @@ exports.getMatch = async (req, res) => {
     const { minute, extraMinute } = extractLiveMinute(matchData);
 
     const state = matchData.state?.state || "NS";
-    const status = mapMatchStatus(state);
+    const status = normalizeMatchState(state);
 
     return res.json({
       _id: String(matchData.id),

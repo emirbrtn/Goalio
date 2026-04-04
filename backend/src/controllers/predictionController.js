@@ -1,3 +1,5 @@
+const { normalizeMatchState } = require("../utils/matchState");
+
 const predictionCache = new Map();
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
@@ -24,12 +26,6 @@ function clamp(value, min, max) {
 function round(value, digits = 2) {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
-}
-
-function normalizeState(state) {
-  if (["INPLAY", "HT", "ET", "PEN_LIVE"].includes(state)) return "live";
-  if (["FT", "AET", "FT_PEN"].includes(state)) return "finished";
-  return "scheduled";
 }
 
 function extractTeams(fixture) {
@@ -76,7 +72,7 @@ function readStandingValue(entry, code) {
 function mapFinishedFixture(fixture) {
   const teams = extractTeams(fixture);
   const state = fixture?.state?.state || "NS";
-  const status = normalizeState(state);
+  const status = normalizeMatchState(state);
 
   return {
     id: String(fixture?.id || ""),
@@ -229,7 +225,7 @@ async function buildPrediction(matchId) {
     throw new Error("Match not found");
   }
 
-  const matchStatus = normalizeState(fixture?.state?.state || "NS");
+  const matchStatus = normalizeMatchState(fixture?.state?.state || "NS");
   if (matchStatus !== "scheduled") {
     const error = new Error("Prediction only available before kickoff");
     error.status = 400;
