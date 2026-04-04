@@ -62,6 +62,7 @@ function HomeContent() {
   const [activePlayer, setActivePlayer] = useState(null);
   const teamProfileCacheRef = useRef(new Map());
   const heroMatchIdRef = useRef(null);
+  const heroPredictionCacheKey = "goalio_hero_prediction_cache_v1";
 
   const normalizeName = (value) =>
     String(value || "")
@@ -107,6 +108,54 @@ function HomeContent() {
     const storageKey = getFavoriteStorageKey(type, targetUser);
     if (!storageKey) return;
     localStorage.setItem(storageKey, JSON.stringify(value));
+  };
+
+  const readHeroPredictionCache = () => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem(heroPredictionCacheKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch (error) {
+      return {};
+    }
+  };
+
+  const readCachedHeroPrediction = (matchId) => {
+    const cache = readHeroPredictionCache();
+    const cached = cache[String(matchId || "")];
+    if (!cached) return null;
+
+    if (
+      !Number.isFinite(Number(cached.homeWin)) ||
+      !Number.isFinite(Number(cached.draw)) ||
+      !Number.isFinite(Number(cached.awayWin))
+    ) {
+      return null;
+    }
+
+    return {
+      homeWin: Number(cached.homeWin),
+      draw: Number(cached.draw),
+      awayWin: Number(cached.awayWin),
+      confidence: Number(cached.confidence || 0),
+      cached: true,
+      generatedAt: cached.generatedAt || "",
+    };
+  };
+
+  const writeCachedHeroPrediction = (matchId, nextPrediction) => {
+    if (typeof window === "undefined" || !matchId || !nextPrediction) return;
+
+    const cache = readHeroPredictionCache();
+    cache[String(matchId)] = {
+      homeWin: Number(nextPrediction.homeWin || 0),
+      draw: Number(nextPrediction.draw || 0),
+      awayWin: Number(nextPrediction.awayWin || 0),
+      confidence: Number(nextPrediction.confidence || 0),
+      generatedAt: nextPrediction.generatedAt || new Date().toISOString(),
+    };
+
+    localStorage.setItem(heroPredictionCacheKey, JSON.stringify(cache));
   };
 
   const persistFavoritesForUser = async (nextTeams, nextPlayers, targetUser = user) => {
@@ -548,6 +597,9 @@ function HomeContent() {
   }
 
   async function tryLoadPrediction(matchId) {
+    const cachedPrediction = readCachedHeroPrediction(matchId);
+    setPrediction(cachedPrediction);
+
     const token = localStorage.getItem("goalio_token");
     if (!token) return;
     try {
@@ -556,15 +608,24 @@ function HomeContent() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ matchId }),
       });
-      const data = await res.json();
+
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        setPrediction({
+        const nextPrediction = {
           homeWin: Math.round(data.probabilities.homeWin * 100),
           draw: Math.round(data.probabilities.draw * 100),
           awayWin: Math.round(data.probabilities.awayWin * 100),
           confidence: Math.round(Math.max(data.probabilities.homeWin, data.probabilities.draw, data.probabilities.awayWin) * 100),
-        });
+          cached: false,
+          generatedAt: data.generatedAt || new Date().toISOString(),
+        };
+
+        writeCachedHeroPrediction(matchId, nextPrediction);
+        setPrediction(nextPrediction);
+        return;
       }
+
+      setPrediction(cachedPrediction);
     } catch (error) {}
   }
 
@@ -953,7 +1014,7 @@ function HomeContent() {
             </div>
 
             <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
-              <AIPredictionCard prediction={prediction} homeTeam={displayHeroHomeTeamName} awayTeam={displayHeroAwayTeamName} />
+              <AIPredictionCard prediction={prediction} homeTeam={displayHeroHomeTeamName} awayTeam={displayHeroAwayTeamName} matchStatus={heroMatch?.status} />
               <div className="bg-gradient-to-br from-[#1e293b] to-[#2e1065] p-6 rounded-[32px] border border-purple-500/20 shadow-3xl min-h-[250px] flex flex-col lg:rounded-[40px]"><div className="flex items-center justify-between mb-4"><h4 className="text-transparent bg-clip-text bg-gradient-to-br from-white to-[#d4bfa6] font-black text-xl uppercase tracking-tighter italic">İstatistikler</h4><PieChart size={20} className="text-blue-400 opacity-60" /></div><div className="flex-1 flex items-center justify-center">{heroMatch.status === "scheduled" ? <div className="text-center opacity-50"><Activity size={30} className="mx-auto text-blue-400 animate-pulse" /><p className="text-[10px] font-black uppercase tracking-widest mt-2">Maç başladığında aktif olacak</p></div> : heroStatsLoading ? <div className="text-center opacity-70"><Loader2 size={28} className="mx-auto text-blue-400 animate-spin" /><p className="text-[10px] font-black uppercase tracking-widest mt-2">İstatistikler yükleniyor</p></div> : <StatsCard match={heroStatsMatch || heroMatch} compact />}</div></div>
                 <div className="bg-gradient-to-br from-[#1e293b] to-[#2e1065] p-6 rounded-[32px] border border-purple-500/20 shadow-3xl min-h-[250px] flex flex-col justify-between lg:rounded-[40px]"><div className="flex items-center justify-between border-b border-white/5 pb-3"><h4 className="text-transparent bg-clip-text bg-gradient-to-br from-white to-[#d4bfa6] font-black text-xl uppercase tracking-tighter italic">Genel Rapor</h4><Activity size={22} className="text-blue-400 opacity-60" /></div><div className="space-y-4 pt-2"><ReportRow label="Veri Tabanı Hacmi" value={`${allMatches.length} MAÇ`} /><ReportRow label="Aktif Canlı Maç" value={`${liveMatches.length} CANLI`} /><ReportRow label="Arşiv Kaydı" value={`${historyMatches.length} BİTEN`} /></div></div>
             </div>
@@ -1014,7 +1075,7 @@ function HomeContent() {
   );
 }
 
-function AIPredictionCard({ prediction, homeTeam, awayTeam }) {
+function AIPredictionCard({ prediction, homeTeam, awayTeam, matchStatus }) {
   const options = prediction
     ? [
         { label: homeTeam || "Ev Sahibi", short: "1", value: prediction.homeWin, color: "from-blue-500 to-cyan-400" },
@@ -1022,6 +1083,8 @@ function AIPredictionCard({ prediction, homeTeam, awayTeam }) {
         { label: awayTeam || "Deplasman", short: "2", value: prediction.awayWin, color: "from-amber-500 to-yellow-300" },
       ]
     : [];
+  const isArchivedPrematchPrediction =
+    Boolean(prediction) && (matchStatus === "live" || matchStatus === "finished");
 
   return (
     <div className="relative flex min-h-[250px] flex-col justify-between overflow-hidden rounded-[32px] border border-blue-500/20 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.22),_transparent_40%),linear-gradient(145deg,#111827,#0b1220)] p-6 shadow-3xl lg:rounded-[40px]">
@@ -1036,6 +1099,12 @@ function AIPredictionCard({ prediction, homeTeam, awayTeam }) {
           <BrainCircuit size={18} className="text-blue-300 animate-pulse" />
         </div>
       </div>
+
+      {isArchivedPrematchPrediction ? (
+        <div className="relative z-10 mt-4 inline-flex w-fit items-center rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-amber-200">
+          Mac oncesi son analiz
+        </div>
+      ) : null}
 
       {prediction ? (
         <div className="relative z-10 grid grid-cols-1 gap-3 sm:grid-cols-3">
