@@ -27,7 +27,11 @@ function mapMatchStatus(rawState) {
 
 async function fetchFromSportsmonks(endpoint) {
   const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
-  if (!token) return [];
+
+  if (!token) {
+    console.log("SPORTSMONKS_API_TOKEN eksik");
+    return [];
+  }
 
   const now = Date.now();
   if (memoryCache[endpoint] && now - memoryCache[endpoint].time < CACHE_TIME_MS) {
@@ -40,14 +44,30 @@ async function fetchFromSportsmonks(endpoint) {
     : `https://api.sportmonks.com/v3/football/${endpoint}?api_token=${token}&${includes}`;
 
   try {
+    console.log("SportMonks istek:", endpoint);
+
     const response = await fetch(url);
-    if (!response.ok) return [];
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log("SportMonks response hata:", response.status, errorText);
+      return [];
+    }
 
     const json = await response.json();
     const data = json.data || [];
+
+    console.log(
+      "SportMonks veri sayisi:",
+      Array.isArray(data) ? data.length : 0,
+      "endpoint:",
+      endpoint
+    );
+
     memoryCache[endpoint] = { data, time: now };
     return data;
   } catch (error) {
+    console.log("SportMonks fetch exception:", error.message);
     return [];
   }
 }
@@ -61,17 +81,20 @@ function mapSportsmonksMatch(match) {
     match.participants?.find((participant) => participant.meta?.location === "home") ||
     match.participants?.[0] ||
     {};
+
   const awayTeamData =
     match.participants?.find((participant) => participant.meta?.location === "away") ||
     match.participants?.[1] ||
     {};
+
   const homeScoreObj =
     match.scores?.find(
-      (score) => score.participant_id === homeTeamData.id && score.description === "CURRENT",
+      (score) => score.participant_id === homeTeamData.id && score.description === "CURRENT"
     ) || {};
+
   const awayScoreObj =
     match.scores?.find(
-      (score) => score.participant_id === awayTeamData.id && score.description === "CURRENT",
+      (score) => score.participant_id === awayTeamData.id && score.description === "CURRENT"
     ) || {};
 
   const state = match.state?.state || "NS";
@@ -98,8 +121,8 @@ function mapSportsmonksMatch(match) {
     date: match.starting_at || new Date().toISOString(),
     startTime: match.starting_at || new Date().toISOString(),
     score: {
-      home: status === "scheduled" ? null : (homeScoreObj.score?.goals ?? 0),
-      away: status === "scheduled" ? null : (awayScoreObj.score?.goals ?? 0),
+      home: status === "scheduled" ? null : homeScoreObj.score?.goals ?? 0,
+      away: status === "scheduled" ? null : awayScoreObj.score?.goals ?? 0,
     },
     sportsmonkData: match,
   };
@@ -139,6 +162,7 @@ function extractLiveMinute(match) {
 
 function parseMatchDate(value) {
   if (!value) return null;
+
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? null : value;
   }
@@ -148,6 +172,7 @@ function parseMatchDate(value) {
 
   const normalized = raw.includes("T") ? raw : raw.replace(" ", "T");
   const hasTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(normalized);
+
   const candidate =
     !hasTimezone && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(normalized)
       ? `${normalized}Z`
@@ -174,9 +199,10 @@ function getLiveMatchWindowMs(rawState) {
 function isActiveLiveMatch(match) {
   if (!match || match.status !== "live") return false;
 
-  const startedAt = parseMatchDate(
-    match.startTime || match.date || match.starting_at || match?.sportsmonkData?.starting_at,
-  )?.getTime() || 0;
+  const startedAt =
+    parseMatchDate(
+      match.startTime || match.date || match.starting_at || match?.sportsmonkData?.starting_at
+    )?.getTime() || 0;
 
   if (!startedAt) return true;
 
@@ -190,6 +216,7 @@ function paginate(items, page = 1, limit = 100) {
 
 function sortByStartTime(items, direction = "asc") {
   const factor = direction === "desc" ? -1 : 1;
+
   return [...items].sort((a, b) => {
     const aTime = new Date(a.startTime || a.date || 0).getTime();
     const bTime = new Date(b.startTime || b.date || 0).getTime();
@@ -201,19 +228,21 @@ function filterByLeague(matches, leagueQuery) {
   if (!leagueQuery) return matches;
 
   const leagueConfig = getLeagueByKey(leagueQuery);
+
   if (leagueConfig) {
     return matches.filter(
       (match) =>
         String(match.leagueId) === String(leagueConfig.id) ||
-        String(match.league || "").toLowerCase().includes(leagueConfig.name.toLowerCase()),
+        String(match.league || "").toLowerCase().includes(leagueConfig.name.toLowerCase())
     );
   }
 
   const normalized = String(leagueQuery).toLowerCase();
+
   return matches.filter(
     (match) =>
       String(match.leagueId) === normalized ||
-      String(match.league || "").toLowerCase().includes(normalized),
+      String(match.league || "").toLowerCase().includes(normalized)
   );
 }
 
@@ -221,6 +250,7 @@ exports.listMatches = async (req, res) => {
   try {
     const start = new Date(Date.now() - 5 * 86400000).toISOString().split("T")[0];
     const end = new Date(Date.now() + 15 * 86400000).toISOString().split("T")[0];
+
     let apiMatches = await fetchFromSportsmonks(`fixtures/between/${start}/${end}`);
     if (!Array.isArray(apiMatches)) apiMatches = apiMatches ? [apiMatches] : [];
 
@@ -229,6 +259,7 @@ exports.listMatches = async (req, res) => {
 
     return res.json(paginate(sortByStartTime(mapped), req.query.page, req.query.limit));
   } catch (error) {
+    console.log("listMatches hata:", error.message);
     return res.status(500).json({ message: "API Hatasi" });
   }
 };
@@ -240,11 +271,12 @@ exports.listLiveMatches = async (req, res) => {
 
     const liveMatches = filterByLeague(
       apiMatches.map(mapSportsmonksMatch).filter(isActiveLiveMatch),
-      req.query.league,
+      req.query.league
     );
 
     return res.json(paginate(sortByStartTime(liveMatches), req.query.page, req.query.limit));
   } catch (error) {
+    console.log("listLiveMatches hata:", error.message);
     return res.status(500).json({ message: "Canli API Hatasi" });
   }
 };
@@ -253,16 +285,18 @@ exports.listHistoryMatches = async (req, res) => {
   try {
     const end = new Date().toISOString().split("T")[0];
     const start = new Date(Date.now() - 15 * 86400000).toISOString().split("T")[0];
+
     let apiMatches = await fetchFromSportsmonks(`fixtures/between/${start}/${end}`);
     if (!Array.isArray(apiMatches)) apiMatches = apiMatches ? [apiMatches] : [];
 
     const history = filterByLeague(
       apiMatches.map(mapSportsmonksMatch).filter((match) => match && match.status === "finished"),
-      req.query.league,
+      req.query.league
     );
 
     return res.json(paginate(sortByStartTime(history, "desc"), req.query.page, req.query.limit));
   } catch (error) {
+    console.log("listHistoryMatches hata:", error.message);
     return res.status(500).json({ message: "Gecmis API Hatasi" });
   }
 };
@@ -277,7 +311,9 @@ exports.searchMatches = async (req, res) => {
     const rangeStart = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
     const rangeEnd = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
 
-    let historicMatches = await fetchFromSportsmonks(`fixtures/search/${encodeURIComponent(req.query.q)}`);
+    let historicMatches = await fetchFromSportsmonks(
+      `fixtures/search/${encodeURIComponent(req.query.q)}`
+    );
     let currentMatches = await fetchFromSportsmonks(`fixtures/between/${rangeStart}/${rangeEnd}`);
 
     if (!Array.isArray(historicMatches)) historicMatches = historicMatches ? [historicMatches] : [];
@@ -287,30 +323,54 @@ exports.searchMatches = async (req, res) => {
       .map(mapSportsmonksMatch)
       .filter((match) => {
         if (!match) return false;
+
         return [match.homeTeam?.name, match.awayTeam?.name, match.league].some((value) =>
-          String(value || "").toLowerCase().includes(term),
+          String(value || "").toLowerCase().includes(term)
         );
       });
 
-    const uniqueMatches = Array.from(new Map(combined.map((match) => [match._id, match])).values());
-    return res.json(paginate(sortByStartTime(uniqueMatches, "desc"), req.query.page, req.query.limit));
+    const uniqueMatches = Array.from(
+      new Map(combined.map((match) => [match._id, match])).values()
+    );
+
+    return res.json(
+      paginate(sortByStartTime(uniqueMatches, "desc"), req.query.page, req.query.limit)
+    );
   } catch (error) {
+    console.log("searchMatches hata:", error.message);
     return res.status(500).json({ message: "Arama API Hatasi" });
   }
 };
 
-exports.updateMatchScore = async (req, res) => res.json({ message: "Okuma modu aktif" });
-exports.debugSportsApi = async (req, res) => res.json({ status: "Aktif" });
+exports.updateMatchScore = async (req, res) => {
+  return res.json({ message: "Okuma modu aktif" });
+};
+
+exports.debugSportsApi = async (req, res) => {
+  return res.json({ status: "Aktif" });
+};
 
 exports.getMatch = async (req, res) => {
   try {
     const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
-    const includes = "include=participants;scores;league;state;statistics.type;lineups.player;events.type;coaches";
+
+    if (!token) {
+      console.log("SPORTSMONKS_API_TOKEN eksik - getMatch");
+      return res.status(500).json({ message: "SPORTSMONKS_API_TOKEN eksik" });
+    }
+
+    const includes =
+      "include=participants;scores;league;state;statistics.type;lineups.player;events.type;coaches";
+
     const response = await fetch(
-      `https://api.sportmonks.com/v3/football/fixtures/${req.params.matchId}?api_token=${token}&${includes}`,
+      `https://api.sportmonks.com/v3/football/fixtures/${req.params.matchId}?api_token=${token}&${includes}`
     );
 
-    if (!response.ok) return res.status(404).json({ message: "Mac bulunamadi" });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log("getMatch SportMonks hata:", response.status, errorText);
+      return res.status(404).json({ message: "Mac bulunamadi" });
+    }
 
     const matchData = (await response.json()).data;
     if (!matchData) return res.status(404).json({ message: "Mac bulunamadi" });
@@ -319,24 +379,32 @@ exports.getMatch = async (req, res) => {
       matchData.participants?.find((participant) => participant.meta?.location === "home") ||
       matchData.participants?.[0] ||
       {};
+
     const awayTeamData =
       matchData.participants?.find((participant) => participant.meta?.location === "away") ||
       matchData.participants?.[1] ||
       {};
+
     const homeScoreObj =
       matchData.scores?.find(
-        (score) => score.participant_id === homeTeamData.id && score.description === "CURRENT",
+        (score) => score.participant_id === homeTeamData.id && score.description === "CURRENT"
       ) || {};
+
     const awayScoreObj =
       matchData.scores?.find(
-        (score) => score.participant_id === awayTeamData.id && score.description === "CURRENT",
+        (score) => score.participant_id === awayTeamData.id && score.description === "CURRENT"
       ) || {};
+
     const homeCoach =
-      matchData.coaches?.find((coach) => String(coach.meta?.participant_id || "") === String(homeTeamData.id || "")) ||
-      null;
+      matchData.coaches?.find(
+        (coach) => String(coach.meta?.participant_id || "") === String(homeTeamData.id || "")
+      ) || null;
+
     const awayCoach =
-      matchData.coaches?.find((coach) => String(coach.meta?.participant_id || "") === String(awayTeamData.id || "")) ||
-      null;
+      matchData.coaches?.find(
+        (coach) => String(coach.meta?.participant_id || "") === String(awayTeamData.id || "")
+      ) || null;
+
     const { minute, extraMinute } = extractLiveMinute(matchData);
 
     const state = matchData.state?.state || "NS";
@@ -352,8 +420,8 @@ exports.getMatch = async (req, res) => {
       date: matchData.starting_at || new Date().toISOString(),
       startTime: matchData.starting_at || new Date().toISOString(),
       score: {
-        home: status === "scheduled" ? null : (homeScoreObj.score?.goals ?? 0),
-        away: status === "scheduled" ? null : (awayScoreObj.score?.goals ?? 0),
+        home: status === "scheduled" ? null : homeScoreObj.score?.goals ?? 0,
+        away: status === "scheduled" ? null : awayScoreObj.score?.goals ?? 0,
       },
       homeTeam: {
         _id: String(homeTeamData.id || ""),
@@ -384,6 +452,7 @@ exports.getMatch = async (req, res) => {
       events: matchData.events || [],
     });
   } catch (error) {
+    console.log("getMatch hata:", error.message);
     return res.status(500).json({ message: "Detay API Hatasi" });
   }
 };
@@ -391,12 +460,25 @@ exports.getMatch = async (req, res) => {
 exports.getMatchStats = async (req, res) => {
   try {
     const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
+
+    if (!token) {
+      console.log("SPORTSMONKS_API_TOKEN eksik - getMatchStats");
+      return res.status(500).json({ message: "SPORTSMONKS_API_TOKEN eksik" });
+    }
+
     const response = await fetch(
-      `https://api.sportmonks.com/v3/football/fixtures/${req.params.matchId}?api_token=${token}&include=statistics;participants`,
+      `https://api.sportmonks.com/v3/football/fixtures/${req.params.matchId}?api_token=${token}&include=statistics;participants`
     );
 
     if (!response.ok) {
-      return res.json({ possessionHome: 50, possessionAway: 50, shotsHome: 0, shotsAway: 0 });
+      const errorText = await response.text();
+      console.log("getMatchStats SportMonks hata:", response.status, errorText);
+      return res.json({
+        possessionHome: 50,
+        possessionAway: 50,
+        shotsHome: 0,
+        shotsAway: 0,
+      });
     }
 
     const matchData = (await response.json()).data;
@@ -406,24 +488,39 @@ exports.getMatchStats = async (req, res) => {
     let shotsAway = 0;
 
     if (matchData?.statistics) {
-      const homeTeamId = matchData.participants?.find((participant) => participant.meta?.location === "home")?.id;
-      const awayTeamId = matchData.participants?.find((participant) => participant.meta?.location === "away")?.id;
+      const homeTeamId = matchData.participants?.find(
+        (participant) => participant.meta?.location === "home"
+      )?.id;
+
+      const awayTeamId = matchData.participants?.find(
+        (participant) => participant.meta?.location === "away"
+      )?.id;
+
       const homeStats = matchData.statistics.filter((stat) => stat.participant_id === homeTeamId) || [];
       const awayStats = matchData.statistics.filter((stat) => stat.participant_id === awayTeamId) || [];
 
       const homePoss = homeStats.find((stat) => [54, 45, 84, 34].includes(stat.type_id));
       const awayPoss = awayStats.find((stat) => [54, 45, 84, 34].includes(stat.type_id));
+
       if (homePoss) possessionHome = parseInt(homePoss.data?.value || homePoss.value || 0, 10);
       if (awayPoss) possessionAway = parseInt(awayPoss.data?.value || awayPoss.value || 0, 10);
 
       const homeShots = homeStats.find((stat) => [42, 86, 33].includes(stat.type_id));
       const awayShots = awayStats.find((stat) => [42, 86, 33].includes(stat.type_id));
+
       if (homeShots) shotsHome = parseInt(homeShots.data?.value || homeShots.value || 0, 10);
       if (awayShots) shotsAway = parseInt(awayShots.data?.value || awayShots.value || 0, 10);
     }
 
-    return res.json({ matchId: req.params.matchId, possessionHome, possessionAway, shotsHome, shotsAway });
+    return res.json({
+      matchId: req.params.matchId,
+      possessionHome,
+      possessionAway,
+      shotsHome,
+      shotsAway,
+    });
   } catch (error) {
+    console.log("getMatchStats hata:", error.message);
     return res.status(500).json({ message: "Istatistik hatasi" });
   }
 };
