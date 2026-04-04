@@ -240,6 +240,10 @@ export function formatLiveMinute(match) {
 
   const rawState = getRawMatchState(match);
   const startedAt = parseMatchDate(match?.startTime || match?.date)?.getTime() || 0;
+  const currentPeriod =
+    match?.sportsmonkData?.currentPeriod ||
+    match?.sportsmonkData?.currentperiod ||
+    null;
 
   if (isHalftimeState(rawState)) {
     return "Devre Arası";
@@ -247,8 +251,8 @@ export function formatLiveMinute(match) {
 
   const minute = firstLiveNumber([
     match?.minute,
-    match?.sportsmonkData?.currentPeriod?.minutes,
-    match?.sportsmonkData?.currentPeriod?.minute,
+    currentPeriod?.minutes,
+    currentPeriod?.minute,
     match?.sportsmonkData?.minute,
     match?.sportsmonkData?.time?.minute,
     match?.sportsmonkData?.state?.minute,
@@ -257,6 +261,8 @@ export function formatLiveMinute(match) {
   const extraMinute = firstLiveNumber([
     match?.extraMinute,
     match?.extra_minute,
+    currentPeriod?.time_added,
+    currentPeriod?.extra_minute,
     match?.sportsmonkData?.extra_minute,
     match?.sportsmonkData?.time?.extra_minute,
     match?.sportsmonkData?.time?.added_time,

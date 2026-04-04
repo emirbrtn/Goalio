@@ -146,10 +146,12 @@ function firstNumericValue(values = []) {
 }
 
 function extractLiveMinute(match) {
+  const currentPeriod = match?.currentPeriod || match?.currentperiod || null;
+
   return {
     minute: firstNumericValue([
-      match?.currentPeriod?.minutes,
-      match?.currentPeriod?.minute,
+      currentPeriod?.minutes,
+      currentPeriod?.minute,
       match?.minute,
       match?.time?.minute,
       match?.state?.minute,
@@ -157,6 +159,8 @@ function extractLiveMinute(match) {
       match?.periods?.current?.minute,
     ]),
     extraMinute: firstNumericValue([
+      currentPeriod?.time_added,
+      currentPeriod?.extra_minute,
       match?.extra_minute,
       match?.time?.extra_minute,
       match?.time?.added_time,
