@@ -271,6 +271,16 @@ export function formatLiveMinute(match) {
     match?.sportsmonkData?.state?.clock?.extra_minute,
   ]);
   const latestEvent = getLatestEventMinute(match);
+  let displayMinute = minute;
+  let displayExtraMinute = extraMinute;
+
+  if (isFirstHalfState(rawState) && minute > 45) {
+    displayMinute = 45;
+    displayExtraMinute = Math.max(extraMinute, minute - 45);
+  } else if (isSecondHalfState(rawState) && minute > 90) {
+    displayMinute = 90;
+    displayExtraMinute = Math.max(extraMinute, minute - 90);
+  }
 
   if (!minute && !extraMinute) {
     if (isHalftimeState(rawState)) {
@@ -322,8 +332,6 @@ export function formatLiveMinute(match) {
     return "";
   }
 
-  if (extraMinute > 0) return `${minute}+${extraMinute}'`;
-  if (isFirstHalfState(rawState) && minute > 45) return `45+${minute - 45}'`;
-  if (isSecondHalfState(rawState) && minute > 90) return `90+${minute - 90}'`;
-  return `${minute}'`;
+  if (displayExtraMinute > 0) return `${displayMinute}+${displayExtraMinute}'`;
+  return `${displayMinute}'`;
 }
