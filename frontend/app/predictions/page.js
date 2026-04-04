@@ -9,6 +9,7 @@ import {
   Loader2,
   ShieldCheck,
   Sparkles,
+  Search,
 } from "lucide-react";
 import {
   formatLeagueName,
@@ -16,6 +17,7 @@ import {
   formatMatchDateTime,
   formatTeamName,
   getLeagueLogo,
+  parseMatchDate,
 } from "@/lib/text";
 
 function getStatusLabel(status) {
@@ -48,6 +50,58 @@ function getPrimaryPick(probabilities) {
   return entries.sort((a, b) => b.value - a.value)[0] || null;
 }
 
+function getLatestEventTotalMinute(match) {
+  const events = Array.isArray(match?.sportsmonkData?.events) ? match.sportsmonkData.events : [];
+  return events.reduce((max, event) => {
+    const minute = Number(event?.minute || 0);
+    const extraMinute = Number(event?.extra_minute || 0);
+    return Math.max(max, minute + extraMinute);
+  }, 0);
+}
+
+function getEstimatedFinishedAt(match) {
+  if (match?.status !== "finished") return null;
+
+  const startedAt = parseMatchDate(match?.startTime || match?.date || match?.sportsmonkData?.starting_at);
+  if (!startedAt) return null;
+
+  const regulationLength = Number(match?.sportsmonkData?.length || 90) || 90;
+  const latestEventMinute = getLatestEventTotalMinute(match);
+  const effectiveMatchMinutes = Math.max(regulationLength, latestEventMinute);
+  const halftimeBreakMinutes = regulationLength >= 90 ? 15 : 0;
+  const extraTimeBreakMinutes = effectiveMatchMinutes > 105 ? 5 : 0;
+
+  return new Date(
+    startedAt.getTime() + (effectiveMatchMinutes + halftimeBreakMinutes + extraTimeBreakMinutes) * 60000,
+  );
+}
+
+function isVisiblePredictionMatch(match) {
+  if (!match) return false;
+  if (match.status !== "finished") return true;
+
+  const estimatedFinishedAt = getEstimatedFinishedAt(match);
+  if (!estimatedFinishedAt) return false;
+
+  return Date.now() - estimatedFinishedAt.getTime() <= 60 * 60 * 1000;
+}
+
+function matchesPredictionSearch(match, query) {
+  const normalizedQuery = String(query || "").trim().toLocaleLowerCase("tr-TR");
+  if (!normalizedQuery) return true;
+
+  const haystack = [
+    match?.homeTeam?.name,
+    match?.awayTeam?.name,
+    match?.league,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLocaleLowerCase("tr-TR");
+
+  return haystack.includes(normalizedQuery);
+}
+
 export default function PredictionsPage() {
   const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
   const [matchList, setMatchList] = useState([]);
@@ -56,6 +110,7 @@ export default function PredictionsPage() {
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadMatches();
@@ -86,7 +141,7 @@ export default function PredictionsPage() {
     try {
       const res = await fetch(`${api}/matches?limit=50`, { cache: "no-store" });
       const data = await res.json();
-      const safeData = Array.isArray(data) ? data : [];
+      const safeData = (Array.isArray(data) ? data : []).filter(isVisiblePredictionMatch);
       const currentSelectedId = selectedMatch?._id || null;
       const matchedSelection = currentSelectedId
         ? safeData.find((match) => match._id === currentSelectedId)
@@ -110,6 +165,31 @@ export default function PredictionsPage() {
       }
     }
   }
+
+  const filteredMatchList = useMemo(
+    () => matchList.filter((match) => matchesPredictionSearch(match, searchTerm)),
+    [matchList, searchTerm],
+  );
+
+  useEffect(() => {
+    if (filteredMatchList.length === 0) {
+      setSelectedMatch(null);
+      setPrediction(null);
+      return;
+    }
+
+    const hasSelected = filteredMatchList.some((match) => match._id === selectedMatch?._id);
+    if (hasSelected) return;
+
+    const nextSelection =
+      filteredMatchList.find((match) => match.status === "scheduled") ||
+      filteredMatchList.find((match) => match.status === "live") ||
+      filteredMatchList[0] ||
+      null;
+
+    setSelectedMatch(nextSelection);
+    setPrediction(null);
+  }, [filteredMatchList, selectedMatch?._id]);
 
   async function generateAIPrediction() {
     if (!selectedMatch) return;
@@ -213,13 +293,23 @@ export default function PredictionsPage() {
               Mac Listesi
             </h4>
 
-            {matchList.length === 0 ? (
+            <div className="relative mb-5">
+              <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+              <input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Listedeki maclarda ara..."
+                className="w-full rounded-2xl border border-slate-700 bg-[#0f172a] py-3 pl-11 pr-4 text-sm text-white outline-none transition-colors focus:border-yellow-500/40"
+              />
+            </div>
+
+            {filteredMatchList.length === 0 ? (
               <div className="flex flex-1 items-center justify-center text-center italic text-slate-600">
-                Analiz icin uygun mac bulunamadi.
+                {matchList.length === 0 ? "Analiz icin uygun mac bulunamadi." : "Aramaniza uygun mac bulunamadi."}
               </div>
             ) : (
               <div className="custom-scrollbar flex-1 space-y-3 overflow-y-auto pr-2">
-                {matchList.map((match) => {
+                {filteredMatchList.map((match) => {
                   const isSelected = selectedMatch?._id === match._id;
                   const leagueLogo = getLeagueLogo(match.league);
 
