@@ -15,7 +15,7 @@ async function fetchSportsmonksPage(endpoint, page = 1) {
     return { data: [], hasMore: false };
   }
 
-  const includes = "include=participants;scores;state;league;events.type";
+  const includes = "include=participants;scores;state;league;events.type;currentPeriod";
   const pageQuery = page > 1 ? `&page=${page}` : "";
   const url = endpoint.includes("?")
     ? `https://api.sportmonks.com/v3/football/${endpoint}&api_token=${token}&${includes}${pageQuery}`
@@ -148,6 +148,8 @@ function firstNumericValue(values = []) {
 function extractLiveMinute(match) {
   return {
     minute: firstNumericValue([
+      match?.currentPeriod?.minutes,
+      match?.currentPeriod?.minute,
       match?.minute,
       match?.time?.minute,
       match?.state?.minute,
@@ -373,7 +375,7 @@ exports.getMatch = async (req, res) => {
     }
 
     const includes =
-      "include=participants;scores;league;state;statistics.type;lineups.player;events.type;coaches";
+      "include=participants;scores;league;state;statistics.type;lineups.player;events.type;coaches;currentPeriod";
 
     const response = await fetch(
       `https://api.sportmonks.com/v3/football/fixtures/${req.params.matchId}?api_token=${token}&${includes}`

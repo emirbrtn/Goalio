@@ -247,6 +247,8 @@ export function formatLiveMinute(match) {
 
   const minute = firstLiveNumber([
     match?.minute,
+    match?.sportsmonkData?.currentPeriod?.minutes,
+    match?.sportsmonkData?.currentPeriod?.minute,
     match?.sportsmonkData?.minute,
     match?.sportsmonkData?.time?.minute,
     match?.sportsmonkData?.state?.minute,
