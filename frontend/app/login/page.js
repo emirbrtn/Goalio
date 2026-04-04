@@ -17,6 +17,30 @@ export default function LoginPage() {
     }
   }, [router]);
 
+  function getFriendlyAuthMessage(status, message, mode) {
+    const text = String(message || "").trim();
+
+    if (text) {
+      return text;
+    }
+
+    if (status === 400) {
+      return mode === "login"
+        ? "Girdiginiz bilgilerle giris yapilamadi."
+        : "Bilgileri kontrol edip tekrar deneyin.";
+    }
+
+    if (status === 401) {
+      return "E-posta veya sifre hatali.";
+    }
+
+    if (status === 503) {
+      return "Sunucu su anda yogun veya gecici olarak kullanilamiyor. Lutfen biraz sonra tekrar deneyin.";
+    }
+
+    return "Su anda islem tamamlanamiyor. Lutfen tekrar deneyin.";
+  }
+
   async function submit(e) {
     e.preventDefault();
     setLoading(true);
@@ -41,10 +65,10 @@ export default function LoginPage() {
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setMessage(data.message || "Islem basarisiz");
+        setMessage(getFriendlyAuthMessage(res.status, data.message, form.mode));
         setLoading(false);
         return;
       }
@@ -59,7 +83,7 @@ export default function LoginPage() {
         setForm({ username: "", email: "", password: "", mode: "login" });
       }
     } catch (error) {
-      setMessage("Sunucuya baglanilamadi");
+      setMessage("Sunucuya ulasilamadi. Internet baglantinizi kontrol edip tekrar deneyin.");
     } finally {
       setLoading(false);
     }

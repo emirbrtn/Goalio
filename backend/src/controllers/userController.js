@@ -27,6 +27,8 @@ const allowedAvatarIds = new Set([
 ]);
 
 const defaultAvatarId = "captain";
+const genericAuthErrorMessage =
+  "Su anda islem tamamlanamiyor. Lutfen kisa bir sure sonra tekrar deneyin.";
 
 const toPublicUserId = (user) => String(user?.legacyId || user?._id || "");
 
@@ -36,6 +38,10 @@ const signToken = (user) =>
     process.env.JWT_SECRET || "goalio-secret",
     { expiresIn: "7d" },
   );
+
+function logServerError(scope, error) {
+  console.error(`[${scope}]`, error);
+}
 
 function requireSameUser(req, res) {
   if (!req.user || String(req.user.id) !== String(req.params.id)) {
@@ -145,7 +151,8 @@ exports.register = async (req, res) => {
       user: sanitizeUser(user),
     });
   } catch (error) {
-    return res.status(500).json({ message: "Sistem hatasi: " + error.message });
+    logServerError("users.register", error);
+    return res.status(500).json({ message: genericAuthErrorMessage });
   }
 };
 
@@ -169,7 +176,8 @@ exports.login = async (req, res) => {
       user: sanitizeUser(user),
     });
   } catch (error) {
-    return res.status(500).json({ message: "Sistem hatasi: " + error.message });
+    logServerError("users.login", error);
+    return res.status(500).json({ message: genericAuthErrorMessage });
   }
 };
 

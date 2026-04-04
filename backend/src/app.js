@@ -16,9 +16,9 @@ app.use((req, res, next) => {
   ensureDb()
     .then(() => next())
     .catch((error) => {
+      console.error("Veritabani baglantisi kurulamadi:", error);
       res.status(503).json({
-        message: "Veritabani baglantisi kurulamadi",
-        detail: error.message,
+        message: "Sunucuya baglanti su anda kullanilamiyor. Lutfen biraz sonra tekrar deneyin.",
       });
     });
 });
