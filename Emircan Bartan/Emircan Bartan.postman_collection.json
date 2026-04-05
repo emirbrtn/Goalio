@@ -1,0 +1,242 @@
+{
+  "info": {
+    "_postman_id": "b3ab74d3-5ac6-4de7-9ef9-535ccaa88979",
+    "name": "Emircan Bartan",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "50713840",
+    "_collection_link": "https://go.postman.co/collection/50713840-b3ab74d3-5ac6-4de7-9ef9-535ccaa88979?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Kullanıcı Kaydı",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"username\": \"emircan_goalio\",\r\n  \"email\": \"emircan11@test.com\",\r\n  \"password\": \"sifre123\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://goalio-ten.vercel.app/api/users/register",
+          "protocol": "https",
+          "host": [
+            "goalio-ten",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "users",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Profil Görüntüleme",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkOGZlMzE0YWY4ZGM5NWYwZjE5ZSIsInVzZXJuYW1lIjoiZW1pcmNhbl9nb2FsaW8iLCJpYXQiOjE3NzUzNjAyNTQsImV4cCI6MTc3NTk2NTA1NH0.mg_F95CSJXEuOGnmUk9-LJU3zDvBWLWlAg9jmruWJt0",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://goalio-ten.vercel.app/api/users/69d1d8fe314af8dc95f0f19e",
+          "protocol": "https",
+          "host": [
+            "goalio-ten",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "users",
+            "69d1d8fe314af8dc95f0f19e"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Profil Güncelleme",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkOGZlMzE0YWY4ZGM5NWYwZjE5ZSIsInVzZXJuYW1lIjoiZW1pcmNhbl9nb2FsaW8iLCJpYXQiOjE3NzUzNjAyNTQsImV4cCI6MTc3NTk2NTA1NH0.mg_F95CSJXEuOGnmUk9-LJU3zDvBWLWlAg9jmruWJt0",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"username\": \"emircan_updated\",\r\n  \"avatarId\": \"striker\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://goalio-ten.vercel.app/api/users/69d1d8fe314af8dc95f0f19e",
+          "protocol": "https",
+          "host": [
+            "goalio-ten",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "users",
+            "69d1d8fe314af8dc95f0f19e"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Maçları Listeleme",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://goalio-ten.vercel.app/api/matches",
+          "protocol": "https",
+          "host": [
+            "goalio-ten",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "matches"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Canlı Maçlar",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://goalio-ten.vercel.app/api/matches/live",
+          "protocol": "https",
+          "host": [
+            "goalio-ten",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "matches",
+            "live"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Maç Tahmini(AI Prediction)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkOGZlMzE0YWY4ZGM5NWYwZjE5ZSIsInVzZXJuYW1lIjoiZW1pcmNhbl9nb2FsaW8iLCJpYXQiOjE3NzUzNjAyNTQsImV4cCI6MTc3NTk2NTA1NH0.mg_F95CSJXEuOGnmUk9-LJU3zDvBWLWlAg9jmruWJt0",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://goalio-ten.vercel.app/api/predictions/69d1d8fe314af8dc95f0f19e",
+          "protocol": "https",
+          "host": [
+            "goalio-ten",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "predictions",
+            "69d1d8fe314af8dc95f0f19e"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Çıkış",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Silme",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkOGZlMzE0YWY4ZGM5NWYwZjE5ZSIsInVzZXJuYW1lIjoiZW1pcmNhbl9nb2FsaW8iLCJpYXQiOjE3NzUzNjAyNTQsImV4cCI6MTc3NTk2NTA1NH0.mg_F95CSJXEuOGnmUk9-LJU3zDvBWLWlAg9jmruWJt0",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://goalio-ten.vercel.app/api/users/69d1d8fe314af8dc95f0f19e",
+          "protocol": "https",
+          "host": [
+            "goalio-ten",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "users",
+            "69d1d8fe314af8dc95f0f19e"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
