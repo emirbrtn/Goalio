@@ -408,8 +408,10 @@ exports.addFavoriteTeam = async (req, res) => {
     return res.status(400).json({ message: "Takim kimligi gerekli" });
   }
 
-  if (!user.favorites.includes(teamId)) {
-    user.favorites.push(teamId);
+  const currentFavorites = Array.isArray(user.favorites) ? user.favorites.map(String) : [];
+
+  if (!currentFavorites.includes(teamId)) {
+    user.favorites = [...currentFavorites, teamId];
     await user.save();
   }
 
@@ -421,7 +423,8 @@ exports.removeFavoriteTeam = async (req, res) => {
 
   const user = await resolveUser(req.params.id);
   if (user) {
-    user.favorites = user.favorites.filter((favorite) => favorite !== String(req.params.teamId));
+    const currentFavorites = Array.isArray(user.favorites) ? user.favorites.map(String) : [];
+    user.favorites = currentFavorites.filter((favorite) => favorite !== String(req.params.teamId));
     await user.save();
   }
 
