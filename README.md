@@ -46,7 +46,7 @@ Kısacası Goalio; canlı skor takibi, takım aidiyeti ve veri bilimi tabanlı t
 1. [Gereksinim Analizi](Gereksinim-Analizi.md)
 2. [REST API Tasarımı](API-Tasarimi.md)
 3. [REST API](Rest-API.md)
-4. [Mobil Front-End](MobilFrontEnd.md)
-5. [Mobil Backend](MobilBackEnd.md)
-6. [Video Sunum](Sunum.md)
-
+4. [Web Front-End](WebFrontEnd.md)
+5. [Mobil Front-End](MobilFrontEnd.md)
+6. [Mobil Backend](MobilBackEnd.md)
+7. [Video Sunum](Sunum.md)
