@@ -178,7 +178,7 @@ function PlayerEventBadges({ stats }) {
         </span>
       ) : null}
     </div>
-  );
+  );//
 }
 
 function TeamMarker({ node, side, onPlayerSelect, teamName, teamLogo, eventStats }) {
