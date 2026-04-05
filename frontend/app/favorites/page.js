@@ -20,7 +20,7 @@ export default function FavoritesPage() {
       return raw ? JSON.parse(raw) : null;
     } catch (error) {
       return null;
-    }
+    }              
   };
 
   const getUserStorageId = (targetUser = user) =>
