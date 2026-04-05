@@ -91,7 +91,7 @@ export default function MatchList({
                 }`}
               >
                 <div className={`flex flex-col ${isLiveHomeVariant ? "gap-4" : "gap-5"}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center justify-between gap-4">
                     <div className="flex min-w-0 items-center gap-2">
                       {leagueLogo ? (
                         <div className="flex h-7 w-7 items-center justify-center rounded-xl border border-white/10 bg-white/5 p-1">
@@ -108,14 +108,14 @@ export default function MatchList({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
                     <button
                       type="button"
                       onClick={(event) => goToTeamPage(event, match.homeTeam?.name || "Ev Sahibi", match.homeTeam?._id, match.homeTeam)}
-                      className="flex min-w-0 flex-row-reverse items-center justify-between gap-3 text-left sm:flex-row sm:justify-end sm:text-right"
+                      className="flex min-w-0 items-center justify-end gap-3 text-right"
                     >
                       <div className="min-w-0">
-                        <div className={`break-words font-black leading-tight tracking-tight text-white ${isLiveHomeVariant ? "text-base md:text-[18px]" : "text-lg md:text-[22px]"}`}>
+                        <div className={`truncate font-black tracking-tight text-white ${isLiveHomeVariant ? "text-base md:text-[18px]" : "text-lg md:text-[22px]"}`}>
                           {formatTeamName(match.homeTeam?.name || "Ev Sahibi")}
                         </div>
                       </div>
@@ -140,7 +140,7 @@ export default function MatchList({
                     <button
                       type="button"
                       onClick={(event) => goToTeamPage(event, match.awayTeam?.name || "Deplasman", match.awayTeam?._id, match.awayTeam)}
-                      className="flex min-w-0 items-center justify-between gap-3 text-left sm:justify-start"
+                      className="flex min-w-0 items-center justify-start gap-3 text-left"
                     >
                       {match.awayTeam?.logo ? (
                         <img
@@ -150,14 +150,14 @@ export default function MatchList({
                         />
                       ) : null}
                       <div className="min-w-0">
-                        <div className={`break-words font-black leading-tight tracking-tight text-white ${isLiveHomeVariant ? "text-base md:text-[18px]" : "text-lg md:text-[22px]"}`}>
+                        <div className={`truncate font-black tracking-tight text-white ${isLiveHomeVariant ? "text-base md:text-[18px]" : "text-lg md:text-[22px]"}`}>
                           {formatTeamName(match.awayTeam?.name || "Deplasman")}
                         </div>
                       </div>
                     </button>
                   </div>
 
-                  <div className={`flex flex-col gap-2 border-t border-white/5 sm:flex-row sm:items-center sm:justify-between ${isLiveHomeVariant ? "pt-3" : "pt-4"}`}>
+                  <div className={`flex items-center justify-between gap-4 border-t border-white/5 ${isLiveHomeVariant ? "pt-3" : "pt-4"}`}>
                     <div className={`font-black uppercase tracking-[0.2em] text-slate-500 ${isLiveHomeVariant ? "text-[10px]" : "text-[12px]"}`}>
                       {getScheduleText(match) || "Tarih bilinmiyor"}
                     </div>
@@ -180,11 +180,11 @@ export default function MatchList({
                   alert("Bu maçın ID'si bulunamadı!");
                 }
               }}
-              className={`group flex cursor-pointer flex-col gap-4 rounded-xl border transition-all sm:flex-row sm:items-center sm:justify-between ${
+              className={`group flex cursor-pointer items-center justify-between rounded-xl border transition-all ${
                 isHistoryVariant ? "p-6 md:p-7" : isScoreboardVariant ? "p-5 md:p-6" : "p-4"
               } ${itemClass}`}
             >
-              <div className={`min-w-0 w-full flex-1 ${isHistoryVariant || isScoreboardVariant ? "sm:pr-6" : "sm:pr-4"}`}>
+              <div className={`min-w-0 flex-1 ${isHistoryVariant || isScoreboardVariant ? "pr-6" : "pr-4"}`}>
                 <div className={`flex flex-col ${isHistoryVariant || isScoreboardVariant ? "gap-4" : "gap-2"}`}>
                   <div className={`flex flex-wrap items-center ${isHistoryVariant || isScoreboardVariant ? "gap-3 md:gap-5" : "gap-2 md:gap-3"} text-slate-200`}>
                     <div className={`flex items-center ${isHistoryVariant || isScoreboardVariant ? "gap-3" : "gap-2"}`}>
@@ -200,8 +200,8 @@ export default function MatchList({
                         onClick={(event) => goToTeamPage(event, match.homeTeam?.name || "Ev Sahibi", match.homeTeam?._id, match.homeTeam)}
                         className={`text-left font-medium transition-colors hover:text-blue-400 ${
                           isHistoryVariant || isScoreboardVariant
-                            ? "max-w-full break-words text-lg font-black tracking-tight text-white md:max-w-sm"
-                            : "max-w-full break-words sm:max-w-[140px] md:max-w-xs"
+                            ? "max-w-[220px] truncate text-lg font-black tracking-tight text-white md:max-w-sm"
+                            : "max-w-[120px] truncate md:max-w-xs"
                         }`}
                       >
                         {formatTeamName(match.homeTeam?.name || "Ev Sahibi")}
@@ -221,8 +221,8 @@ export default function MatchList({
                         onClick={(event) => goToTeamPage(event, match.awayTeam?.name || "Deplasman", match.awayTeam?._id, match.awayTeam)}
                         className={`text-left font-medium transition-colors hover:text-blue-400 ${
                           isHistoryVariant || isScoreboardVariant
-                            ? "max-w-full break-words text-lg font-black tracking-tight text-white md:max-w-sm"
-                            : "max-w-full break-words sm:max-w-[140px] md:max-w-xs"
+                            ? "max-w-[220px] truncate text-lg font-black tracking-tight text-white md:max-w-sm"
+                            : "max-w-[120px] truncate md:max-w-xs"
                         }`}
                       >
                         {formatTeamName(match.awayTeam?.name || "Deplasman")}
@@ -252,7 +252,7 @@ export default function MatchList({
                 </div>
               </div>
 
-              <div className={`flex w-full flex-shrink-0 flex-row items-center justify-between gap-3 sm:w-auto sm:flex-col sm:items-end ${isHistoryVariant || isScoreboardVariant ? "sm:gap-2.5" : "sm:gap-1.5"}`}>
+              <div className={`flex flex-shrink-0 flex-col items-end ${isHistoryVariant || isScoreboardVariant ? "gap-2.5" : "gap-1.5"}`}>
                 <div className={`rounded-lg border font-extrabold ${
                   isHistoryVariant || isScoreboardVariant
                     ? "min-w-[92px] px-5 py-3 text-3xl tracking-tight md:min-w-[108px]"
@@ -260,7 +260,7 @@ export default function MatchList({
                 } ${scoreClass}`}>
                   {getScoreText(match)}
                 </div>
-                <div className={`flex flex-col items-end font-semibold ${isHistoryVariant || isScoreboardVariant ? "text-[11px] md:text-[13px]" : "text-[10px] md:text-xs"}`}>
+                <div className={`flex flex-col items-end whitespace-nowrap font-semibold ${isHistoryVariant || isScoreboardVariant ? "text-[11px] md:text-[13px]" : "text-[10px] md:text-xs"}`}>
                   {match.status === "live" && liveMinuteLabel ? (
                     <span className="mb-1 text-[13px] font-black italic tracking-tight text-red-400 md:text-[15px]">
                       {liveMinuteLabel}

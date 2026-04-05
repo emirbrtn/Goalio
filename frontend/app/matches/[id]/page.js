@@ -352,42 +352,23 @@ export default function MatchDetailPage() {
             <div className="flex items-center gap-4 mb-6"><BrainCircuit className="text-yellow-400" size={28} /><h3 className="text-xl font-black text-white italic uppercase">AI Predictor</h3></div>
             {prediction ? (
               <div className="space-y-6">
-                <PredictionBar label={formatTeamName(match.homeTeam.name)} value={prediction.probabilities?.homeWin || 0} color="from-red-600" />
-                <PredictionBar label="Beraberlik" value={prediction.probabilities?.draw || 0} color="from-slate-600" />
-                <PredictionBar label={formatTeamName(match.awayTeam.name)} value={prediction.probabilities?.awayWin || 0} color="from-yellow-500" />
+                <PredictionBar label={formatTeamName(match.homeTeam.name)} value={prediction.probabilities.homeWin} color="from-red-600" />
+                <PredictionBar label="Beraberlik" value={prediction.probabilities.draw} color="from-slate-600" />
+                <PredictionBar label={formatTeamName(match.awayTeam.name)} value={prediction.probabilities.awayWin} color="from-yellow-500" />
               </div>
             ) : <div className="flex-1 text-center text-slate-500 py-10 text-sm font-medium uppercase tracking-widest">Analizi görmek için butona tıklayın.</div>}
 
             <button
               onClick={async () => {
                 setGenerating(true);
-                setMessage("");
-
-                try {
-                  const token = localStorage.getItem("goalio_token");
-                  if (!token) {
-                    setMessage("AI tahmini görmek için giriş yapmalısınız.");
-                    return;
-                  }
-
-                  const res = await fetch(`${api}/predictions/generate`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({ matchId: String(match._id) }),
-                  });
-
-                  const data = await res.json().catch(() => ({}));
-                  if (!res.ok || !data?.probabilities) {
-                    setMessage(data?.message || "AI tahmini şu anda üretilemiyor.");
-                    return;
-                  }
-
-                  setPrediction(data);
-                } catch (error) {
-                  setMessage("AI tahmini şu anda üretilemiyor.");
-                } finally {
-                  setGenerating(false);
-                }
+                const token = localStorage.getItem("goalio_token");
+                const res = await fetch(`${api}/predictions/generate`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ matchId: String(match._id) }),
+                });
+                setPrediction(await res.json());
+                setGenerating(false);
               }}
               disabled={generating}
               className="mt-6 relative group w-full py-5 bg-gradient-to-r from-red-600 via-yellow-500 to-red-600 text-black rounded-[20px] font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-red-600/20 active:scale-95 cursor-pointer overflow-hidden"

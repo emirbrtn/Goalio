@@ -387,7 +387,7 @@ export default function ProfilePage() {
                   <label className="mb-3 block text-xs font-medium uppercase tracking-wider text-slate-400">
                     Avatar Seçimi
                   </label>
-                  <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {avatarPresets.map((avatar) => {
                       const isSelected = profileForm.avatarId === avatar.id;
 
@@ -396,9 +396,7 @@ export default function ProfilePage() {
                           key={avatar.id}
                           type="button"
                           onClick={() => setProfileForm({ ...profileForm, avatarId: avatar.id })}
-                          title={`${avatar.name} - ${avatar.role}`}
-                          aria-label={`${avatar.name} - ${avatar.role}`}
-                          className={`min-w-0 overflow-hidden rounded-[22px] border p-3 text-left transition-all sm:p-4 ${
+                          className={`rounded-[22px] border p-4 text-left transition-all ${
                             isSelected
                               ? "border-blue-500/80 bg-blue-500/12 shadow-lg shadow-blue-500/10"
                               : "border-slate-700/80 bg-[#0f172a]/30 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-[#0f172a]/55"
@@ -504,6 +502,7 @@ export default function ProfilePage() {
                   <input
                     type="checkbox"
                     checked={notificationPrefs.predictionResolved}
+                    aria-label="Tahmin sonucu bildirimlerini aç veya kapat"
                     onChange={(event) =>
                       setNotificationPrefs({
                         ...notificationPrefs,
@@ -524,6 +523,7 @@ export default function ProfilePage() {
                   <input
                     type="checkbox"
                     checked={notificationPrefs.favoriteMatchStart}
+                    aria-label="Favori takım maç başlangıcı bildirimlerini aç veya kapat"
                     onChange={(event) =>
                       setNotificationPrefs({
                         ...notificationPrefs,
@@ -544,6 +544,7 @@ export default function ProfilePage() {
                   <input
                     type="checkbox"
                     checked={notificationPrefs.favoriteMatchResult}
+                    aria-label="Favori takım maç sonucu bildirimlerini aç veya kapat"
                     onChange={(event) =>
                       setNotificationPrefs({
                         ...notificationPrefs,
