@@ -43,7 +43,7 @@ function mapLeagueFixture(fixture) {
     {};
   const awayScore =
     fixture.scores?.find((score) => score.participant_id === awayTeam.id && score.description === "CURRENT") ||
-    {};
+    {};//maçlar görüntülendi
 
   let status = "scheduled";
   const state = fixture.state?.state || "NS";
