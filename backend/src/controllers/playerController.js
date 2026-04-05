@@ -9,7 +9,7 @@ function buildPlayerName(player) {
     player.fullname ||
     [player.firstname, player.lastname].filter(Boolean).join(" ") ||
     "Futbolcu"
-  );
+  );//adı düzenlendi 
 }
 
 function normalize(value) {

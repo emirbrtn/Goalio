@@ -6,9 +6,9 @@
 - **API Metodu:** `PUT /users/{id}/password`
 - **Açıklama:**  Kullanıcının şifresini değiştirmesini sağlar.
 
-**3.Maç Skoru Güncelleme**
-- **API Metodu:** `PUT /matches/{matchld}/score`
-- **Açıklama:**  Yetkili kullanıcı tarafından skor güncellemesini sağlar.
+**3.Lig Genel Görünümünü Listeleme**
+- **API Metodu:** `GET /teams/league-overview/{leagueKey}` 
+- **Açıklama:** Belirli bir ligin öne çıkan takımlarını ve genel görünüm verilerini görüntülemeyi sağlar.
 
 **4.Lig Bazlı Maç Listeleme**
 - **API Metodu:** `GET /matches?league={leagueld}`

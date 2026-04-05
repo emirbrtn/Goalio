@@ -1,17 +1,1 @@
 @import "tailwindcss";
-
-html,
-body {
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-.custom-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}

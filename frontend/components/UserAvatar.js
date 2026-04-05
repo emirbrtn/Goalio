@@ -41,10 +41,10 @@ export default function UserAvatar({
 
   const sizeMap = {
     sm: {
-      outer: "h-10 w-10 sm:h-12 sm:w-12",
-      icon: "h-4 w-4 sm:h-5 sm:w-5",
+      outer: "h-12 w-12",
+      icon: "h-5 w-5",
       ring: "p-[1.5px]",
-      sub: "text-[9px] sm:text-[10px]",
+      sub: "text-[10px]",
     },
     md: {
       outer: "h-16 w-16",
@@ -61,9 +61,7 @@ export default function UserAvatar({
   };
 
   const currentSize = sizeMap[size] || sizeMap.md;
-  const wrapperClass = showLabel
-    ? "flex w-full min-w-0 flex-col items-start gap-3 min-[560px]:flex-row min-[560px]:items-center min-[560px]:gap-3.5"
-    : "flex items-center gap-3";
+  const wrapperClass = showLabel ? "flex w-full items-center gap-3.5" : "flex items-center gap-3";
   const Icon = iconMap[preset.icon] || Shield;
 
   return (
@@ -78,11 +76,11 @@ export default function UserAvatar({
       </div>
 
       {showLabel ? (
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <p className="text-[12px] font-black leading-tight text-white sm:text-[15px]">
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-black leading-tight text-white sm:text-[15px]">
             {preset.name}
           </p>
-          <p className={`mt-1 break-words font-black uppercase leading-tight tracking-[0.12em] text-slate-500 sm:tracking-[0.18em] ${currentSize.sub}`}>
+          <p className="mt-1 text-[10px] font-black uppercase leading-tight tracking-[0.18em] text-slate-500 sm:text-[11px]">
             {preset.role}
           </p>
         </div>

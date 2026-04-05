@@ -1,5 +1,4 @@
 const { getLeagueByKey, getAllLeagues } = require("../utils/leagueConfig");
-const { normalizeMatchState } = require("../utils/matchState");
 
 async function fetchSM(endpoint) {
   const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
@@ -44,11 +43,12 @@ function mapLeagueFixture(fixture) {
     {};
   const awayScore =
     fixture.scores?.find((score) => score.participant_id === awayTeam.id && score.description === "CURRENT") ||
-    {};
+    {};//maçlar görüntülendi
 
   let status = "scheduled";
   const state = fixture.state?.state || "NS";
-  status = normalizeMatchState(state);
+  if (["INPLAY", "HT", "ET", "PEN_LIVE"].includes(state)) status = "live";
+  if (["FT", "AET", "FT_PEN"].includes(state)) status = "finished";
 
   return {
     _id: String(fixture.id),
