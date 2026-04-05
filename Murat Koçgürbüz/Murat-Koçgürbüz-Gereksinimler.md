@@ -7,8 +7,8 @@
 - **Açıklama:**  Kullanıcının şifresini değiştirmesini sağlar.
 
 **3.Lig Genel Görünümünü Listeleme**
--**API Metodu:** `GET /teams/league-overview/{leagueKey}` 
--**Açıklama:** Belirli bir ligin öne çıkan takımlarını ve genel görünüm verilerini görüntülemeyi sağlar.
+- **API Metodu:** `GET /teams/league-overview/{leagueKey}` 
+- **Açıklama:** Belirli bir ligin öne çıkan takımlarını ve genel görünüm verilerini görüntülemeyi sağlar.
 
 **4.Lig Bazlı Maç Listeleme**
 - **API Metodu:** `GET /matches?league={leagueld}`
