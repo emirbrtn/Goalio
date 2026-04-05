@@ -374,8 +374,10 @@ exports.addFavoriteTeam = async (req, res) => {
     return res.status(400).json({ message: "Takim kimligi gerekli" });
   }
 
-  if (!user.favorites.includes(teamId)) {
-    user.favorites.push(teamId);
+  const currentFavorites = Array.isArray(user.favorites) ? user.favorites.map(String) : [];
+
+  if (!currentFavorites.includes(teamId)) {
+    user.favorites = [...currentFavorites, teamId];
     await user.save();
   }
 
@@ -387,7 +389,8 @@ exports.removeFavoriteTeam = async (req, res) => {
 
   const user = await resolveUser(req.params.id);
   if (user) {
-    user.favorites = user.favorites.filter((favorite) => favorite !== String(req.params.teamId));
+    const currentFavorites = Array.isArray(user.favorites) ? user.favorites.map(String) : [];
+    user.favorites = currentFavorites.filter((favorite) => favorite !== String(req.params.teamId));
     await user.save();
   }
 
@@ -441,12 +444,16 @@ exports.listUserPredictions = async (req, res) => {
           homeTeam: { name: "Bilinmiyor", logo: "" },
           awayTeam: { name: "Bilinmiyor", logo: "" },
         };
+        const normalizedMatchId = String(prediction.matchId || "").trim();
 
-        if (token) {
+        if (token && /^\d+$/.test(normalizedMatchId)) {
           try {
             const response = await fetch(
-              `https://api.sportmonks.com/v3/football/fixtures/${prediction.matchId}?api_token=${token}&include=participants;scores;state;league`,
+              `https://api.sportmonks.com/v3/football/fixtures/${normalizedMatchId}?api_token=${token}&include=participants;scores;state;league`,
             );
+            if (!response.ok) {
+              throw new Error(`fixture-fetch-failed:${response.status}`);
+            }
             const json = await response.json();
             const fixture = json.data || {};
             const participants = fixture.participants || [];
@@ -502,11 +509,62 @@ exports.saveUserPrediction = async (req, res) => {
     matchId,
   }).lean();
 
+<<<<<<< HEAD
+    if (!/^\d+$/.test(matchId)) {
+      return res.status(400).json({ message: "Gecersiz mac kimligi" });
+    }
+
+    if (!allowedPredictionResults.has(predictedResult)) {
+      return res.status(400).json({ message: "Gecersiz tahmin secimi" });
+    }
+
+    const fixture = await fetchFixtureForPrediction(matchId);
+    const matchStatus = normalizeMatchState(fixture?.state?.state || "NS");
+    if (matchStatus !== "scheduled") {
+      return res.status(400).json({ message: "Tahmin sadece baslamamis maclar icin kaydedilebilir" });
+    }
+
+    const existingPrediction = await UserPrediction.findOne({
+      userId: String(req.params.id),
+      matchId,
+    }).lean();
+
+    if (existingPrediction) {
+      return res.status(200).json({
+        ...existingPrediction,
+        id: String(existingPrediction.legacyId || existingPrediction._id),
+        _id: String(existingPrediction.legacyId || existingPrediction._id),
+      });
+    }
+
+    const prediction = await UserPrediction.create({
+      userId: String(req.params.id),
+      matchId,
+      predictedResult,
+      createdOn: new Date().toISOString(),
+    });
+
+    return res.status(201).json({
+      ...prediction.toObject(),
+      id: String(prediction.legacyId || prediction._id),
+      _id: String(prediction.legacyId || prediction._id),
+    });
+  } catch (error) {
+    const status = error.status || 500;
+    return res.status(status).json({
+      message:
+        status === 404
+          ? "Mac bulunamadi"
+          : status === 503
+            ? "Mac durumu su anda dogrulanamiyor. Lutfen biraz sonra tekrar deneyin."
+            : "Tahmin kaydedilemedi",
+=======
   if (existingPrediction) {
     return res.status(200).json({
       ...existingPrediction,
       id: String(existingPrediction.legacyId || existingPrediction._id),
       _id: String(existingPrediction.legacyId || existingPrediction._id),
+>>>>>>> 4b5d01481e6cc1f2dfd2c90ec5cd2cb1512a2634
     });
   }
 

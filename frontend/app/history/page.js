@@ -20,7 +20,7 @@ function HistoryContent() {
     loadHistory(activeLeague);
   }, [activeLeague]);
 
-  async function loadHistory(leagueKey) {
+  async function loadHistory(leagueKey) {   
     setLoading(true);
     setMessage("");
 
