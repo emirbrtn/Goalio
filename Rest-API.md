@@ -6,6 +6,7 @@ Bu dokümanda, proje ekibindeki her üyenin geliştirmekten sorumlu olduğu REST
 
 ---
 
+
 ## Grup Üyelerinin REST API Metotları
 
 1. [Emircan Bartan'ın REST API Metotları](Emircan-Bartan/Emircan-Bartan-Rest-API-Gorevleri.md)
