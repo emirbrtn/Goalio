@@ -8,8 +8,8 @@
 
 **Request Body:**
 {
-  "email": "mk@gmail.com",
-  "password": "yenişifre123"
+  "email": "kmk@goalio.com",
+  "password": "YeniSifre123"
 }
 
 **Response:** `200 OK` - Kullanıcı girişi başarılı ve Token oluşturuldu.
@@ -18,6 +18,13 @@
 ### 2. Şifre Değiştirme
 
 **Endpoint:** `PUT /api/users/{userId}/password`
+
+**Request Body:**
+{
+    "currentPassword": "YeniSifre123", 
+    "newPassword": "yenisifre"
+}
+**Response:** `200 No Content`
 
 **Path Parameters:**
 * `userId` (string, required) - Kullanıcı ID'si
