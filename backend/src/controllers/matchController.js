@@ -479,6 +479,11 @@ exports.getMatch = async (req, res) => {
 exports.getMatchStats = async (req, res) => {
   try {
     const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
+    const rawMatchId = String(req.params.matchId || "").trim();
+
+    if (!/^\d+$/.test(rawMatchId)) {
+      return res.status(400).json({ message: "Gecersiz mac kimligi" });
+    }
 
     if (!token) {
       console.log("SPORTSMONKS_API_TOKEN eksik - getMatchStats");
@@ -486,7 +491,7 @@ exports.getMatchStats = async (req, res) => {
     }
 
     const response = await fetch(
-      `https://api.sportmonks.com/v3/football/fixtures/${req.params.matchId}?api_token=${token}&include=statistics;participants`
+      `https://api.sportmonks.com/v3/football/fixtures/${rawMatchId}?api_token=${token}&include=statistics;participants`
     );
 
     if (!response.ok) {
@@ -532,7 +537,7 @@ exports.getMatchStats = async (req, res) => {
     }
 
     return res.json({
-      matchId: req.params.matchId,
+      matchId: rawMatchId,
       possessionHome,
       possessionAway,
       shotsHome,
