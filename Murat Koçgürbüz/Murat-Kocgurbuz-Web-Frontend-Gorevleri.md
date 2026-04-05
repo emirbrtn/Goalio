@@ -1,3 +1,5 @@
+**Front-end Test Videosu:** [YouTube Linki](https://youtu.be/7BV3eC8jqsE)
+
 ## 1. Kullanıcı Girişi Sayfası (Login)
 * **API Endpoint:** `POST /users/login`
 * **Görev:** Kullanıcının hesap bilgileriyle uygulamaya güvenli giriş yapmasını sağlayan sayfanın tasarımı ve implementasyonu.
