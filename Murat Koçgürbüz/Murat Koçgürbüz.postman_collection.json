@@ -1,0 +1,220 @@
+{
+	"info": {
+		"_postman_id": "909aeea0-c9cd-415d-9a40-f8acd1a1c559",
+		"name": "Murat Koçgürbüz",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "50510246",
+		"_collection_link": "https://muratkocgurbuz-2206613.postman.co/workspace/Murat-Kocgurbuz's-Workspace~6427dae2-dcc0-4682-8b33-6949a2d81b27/collection/50510246-909aeea0-c9cd-415d-9a40-f8acd1a1c559?action=share&source=collection_link&creator=50510246"
+	},
+	"item": [
+		{
+			"name": "1-Kullanıcı Girişi (Login)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"kmk@goalio.com\",\r\n  \"password\": \"Sifre123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://goalio-ten.vercel.app/api/users/login",
+					"protocol": "https",
+					"host": [
+						"goalio-ten",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"users",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2-Şifre Değiştirme",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkYjM1MzE0YWY4ZGM5NWYwZjFiZiIsInVzZXJuYW1lIjoibWsiLCJpYXQiOjE3NzUzNjA4MzQsImV4cCI6MTc3NTk2NTYzNH0.U5n8uJFsAaAM2Q-MyTrlAFHTZ4KWK21zjqWNbi-J5mQ",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"currentPassword\": \"Sifre123\", \r\n    \"newPassword\": \"YeniSifre123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://goalio-ten.vercel.app/api/users/69d1db35314af8dc95f0f1bf/password",
+					"protocol": "https",
+					"host": [
+						"goalio-ten",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"users",
+						"69d1db35314af8dc95f0f1bf",
+						"password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3-Lig Genel Görünümünü Listeleme",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://goalio-ten.vercel.app/api/teams/league-overview/turkey",
+					"protocol": "https",
+					"host": [
+						"goalio-ten",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"teams",
+						"league-overview",
+						"turkey"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. Lig Bazlı Maç Listeleme (Fikstür)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://goalio-ten.vercel.app/api/matches?league=600",
+					"protocol": "https",
+					"host": [
+						"goalio-ten",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"matches"
+					],
+					"query": [
+						{
+							"key": "league",
+							"value": "600"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Maç Detayı Görüntüleme",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://goalio-ten.vercel.app/api/matches/19443177",
+					"protocol": "https",
+					"host": [
+						"goalio-ten",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"matches",
+						"19443177"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "6. Takım Bilgisi Görüntüleme",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://goalio-ten.vercel.app/api/teams/286",
+					"protocol": "https",
+					"host": [
+						"goalio-ten",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"teams",
+						"286"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "7. Favori Takım Silme",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkYjM1MzE0YWY4ZGM5NWYwZjFiZiIsInVzZXJuYW1lIjoibWsiLCJpYXQiOjE3NzUzNjA4MzQsImV4cCI6MTc3NTk2NTYzNH0.U5n8uJFsAaAM2Q-MyTrlAFHTZ4KWK21zjqWNbi-J5mQ",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "https://goalio-ten.vercel.app/api/users/69d1db35314af8dc95f0f1bf/favorites/34",
+					"protocol": "https",
+					"host": [
+						"goalio-ten",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"users",
+						"69d1db35314af8dc95f0f1bf",
+						"favorites",
+						"34"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "8. Tahmin Oluşturma (AI Prediction)",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}
