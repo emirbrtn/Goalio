@@ -1,5 +1,7 @@
 # Goalio - Frontend ve API Entegrasyon Gereksinimleri
 
+**Front-end Test Videosu:** [Video İzle](https://youtu.be/kUiAhZianvM)
+
 Bu doküman, Goalio projesinin kullanıcı arayüzü (UI) bileşenleri, kullanıcı deneyimi (UX) akışları ve API entegrasyon süreçlerini takip etmek amacıyla oluşturulmuştur.
 
 ## 1. Kullanıcı Kaydı (Register) Sayfası
