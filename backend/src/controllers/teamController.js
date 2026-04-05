@@ -452,7 +452,10 @@ exports.getTeam = async (req, res) => {
 
 exports.searchTeams = async (req, res) => {
   try {
-    const query = String(req.query.q || "").trim();
+    const query = String(req.query.q || "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 80);
     if (!query) {
       return res.json([]);
     }
