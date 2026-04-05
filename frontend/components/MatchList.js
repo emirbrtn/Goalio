@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { formatLeagueName, formatLiveMinute, formatMatchDateTime, formatTeamName, getLeagueLogo } from "@/lib/text";
 
-export default function MatchList({
+ export default function MatchList({
   title,
   matches = [],
   variant = "default",
