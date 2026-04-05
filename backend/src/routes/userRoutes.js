@@ -7,7 +7,7 @@ router.post("/register", controller.register);
 router.post("/login", controller.login);
 router.post("/logout", auth, controller.logout);
 
-// Profil Rotaları
+// Profil Rotaları-1
 router.get("/:id", auth, controller.getUserProfile);
 router.put("/:id", auth, controller.updateUserProfile);
 router.delete("/:id", auth, controller.deleteUser);
