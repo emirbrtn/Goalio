@@ -1,6 +1,6 @@
 # REST API Görev Dağılımı
 
-**REST API Adresi:** [https://goalio-ten.vercel.app/api](https://goalio-ten.vercel.app/api)
+**REST API Adresi:** [api.Goalio.com](https://goalio-ten.vercel.app/api)
 
 Bu dokümanda, proje ekibindeki her üyenin geliştirmekten sorumlu olduğu REST API metotları listelenmektedir.
 
