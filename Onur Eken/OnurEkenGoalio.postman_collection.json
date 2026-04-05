@@ -1,0 +1,249 @@
+{
+	"info": {
+		"_postman_id": "acea1ad7-a205-44f9-a999-1724ec4c8665",
+		"name": "Goalio",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "50804353",
+		"_collection_link": "https://onurekenn91-9434209.postman.co/workspace/e1448f82-59f6-4010-89e9-6047d9d07718/collection/50804353-acea1ad7-a205-44f9-a999-1724ec4c8665?action=share&source=collection_link&creator=50804353"
+	},
+	"item": [
+		{
+			"name": "Kayıt Ol",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": "https://goalio-ten.vercel.app//users/register"
+			},
+			"response": []
+		},
+		{
+			"name": "Giriş Yap",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"onurtest@example.com\",\r\n  \"password\": \"123456\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "https://goalio-ten.vercel.app/api/users/login"
+			},
+			"response": []
+		},
+		{
+			"name": "Favori Takım Ekleme",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFlYTgzYjliMjZlMGIwZTUzMzhiNSIsInVzZXJuYW1lIjoib251cnRlc3Q3IiwiaWF0IjoxNzc1MzY0NzQ2LCJleHAiOjE3NzU5Njk1NDZ9.ZMUevmpyrOQa_KLyE74rE9je7wG6aRgFCkzqsUQdUq8"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"teamId\": \"34\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "https://goalio-ten.vercel.app/api/users/69d1ea83b9b26e0b0e5338b5/favorites"
+			},
+			"response": []
+		},
+		{
+			"name": "Kullanıcı Tahmini Kaydetme",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFlOTc5NjM3MzNjZmY3ZjAyNmYyOSIsInVzZXJuYW1lIjoib251cnRlc3Q2IiwiaWF0IjoxNzc1MzY0NTgwLCJleHAiOjE3NzU5NjkzODB9.sAwNZxda76ZjHJ8qomyX0p_5qSNiwd2i3VTpcxtHxFw"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"matchId\": \"19443174\",\r\n  \"predictedResult\": \"homeWin\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "https://goalio-ten.vercel.app/api/users/69d1deb8fb3232d2d574d142/predictions"
+			},
+			"response": []
+		},
+		{
+			"name": "Bildirim Tercihlerini Güncelleme",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkZWI4ZmIzMjMyZDJkNTc0ZDE0MiIsInVzZXJuYW1lIjoib251cnRlc3QiLCJpYXQiOjE3NzUzNjE3MjEsImV4cCI6MTc3NTk2NjUyMX0.sWprC1PqQD1NYm1R_6Otqcqi-pApQ_phUGrjNJ1_oLo"
+					}
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"predictionResolved\": true,\r\n  \"favoriteMatchStart\": true,\r\n  \"favoriteMatchResult\": false\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "https://goalio-ten.vercel.app/api/users/69d1deb8fb3232d2d574d142/notifications"
+			},
+			"response": []
+		},
+		{
+			"name": "Favori Takımları Listeleme",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkZWI4ZmIzMjMyZDJkNTc0ZDE0MiIsInVzZXJuYW1lIjoib251cnRlc3QiLCJpYXQiOjE3NzUzNjE3MjEsImV4cCI6MTc3NTk2NjUyMX0.sWprC1PqQD1NYm1R_6Otqcqi-pApQ_phUGrjNJ1_oLo"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "https://goalio-ten.vercel.app/api/users/69d1deb8fb3232d2d574d142/favorites"
+			},
+			"response": []
+		},
+		{
+			"name": "Maç İstatistiklerini Görüntüleme",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkZWI4ZmIzMjMyZDJkNTc0ZDE0MiIsInVzZXJuYW1lIjoib251cnRlc3QiLCJpYXQiOjE3NzUzNjE3MjEsImV4cCI6MTc3NTk2NjUyMX0.sWprC1PqQD1NYm1R_6Otqcqi-pApQ_phUGrjNJ1_oLo"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "https://goalio-ten.vercel.app/api/matches/19439545/stats"
+			},
+			"response": []
+		},
+		{
+			"name": "Geçmiş Maçları Listeleme",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkZWI4ZmIzMjMyZDJkNTc0ZDE0MiIsInVzZXJuYW1lIjoib251cnRlc3QiLCJpYXQiOjE3NzUzNjE3MjEsImV4cCI6MTc3NTk2NjUyMX0.sWprC1PqQD1NYm1R_6Otqcqi-pApQ_phUGrjNJ1_oLo"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "https://goalio-ten.vercel.app/api/matches/history"
+			},
+			"response": []
+		},
+		{
+			"name": "Takım ve Oyuncu Arama",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkZWI4ZmIzMjMyZDJkNTc0ZDE0MiIsInVzZXJuYW1lIjoib251cnRlc3QiLCJpYXQiOjE3NzUzNjE3MjEsImV4cCI6MTc3NTk2NjUyMX0.sWprC1PqQD1NYm1R_6Otqcqi-pApQ_phUGrjNJ1_oLo"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://goalio-ten.vercel.app/api/teams/search?q=Galatasaray",
+					"protocol": "https",
+					"host": [
+						"goalio-ten",
+						"vercel",
+						"app"
+					],
+					"path": [
+						"api",
+						"teams",
+						"search"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": "Galatasaray"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Tahmin Silme",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDFkZWI4ZmIzMjMyZDJkNTc0ZDE0MiIsInVzZXJuYW1lIjoib251cnRlc3QiLCJpYXQiOjE3NzUzNjE3MjEsImV4cCI6MTc3NTk2NjUyMX0.sWprC1PqQD1NYm1R_6Otqcqi-pApQ_phUGrjNJ1_oLo"
+					}
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "https://goalio-ten.vercel.app/api/users/69d1deb8fb3232d2d574d142/predictions/69d1e0e7cb00aa10c8ebcac7"
+			},
+			"response": []
+		}
+	]
+}
