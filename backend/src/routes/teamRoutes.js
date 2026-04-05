@@ -8,3 +8,5 @@ router.get("/league/:leagueKey", controller.listLeagueTeams);
 router.get("/:teamId", controller.getTeam);
 
 module.exports = router;
+
+

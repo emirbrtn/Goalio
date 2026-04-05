@@ -502,6 +502,7 @@ export default function ProfilePage() {
                   <input
                     type="checkbox"
                     checked={notificationPrefs.predictionResolved}
+                    aria-label="Tahmin sonucu bildirimlerini aç veya kapat"
                     onChange={(event) =>
                       setNotificationPrefs({
                         ...notificationPrefs,
@@ -522,6 +523,7 @@ export default function ProfilePage() {
                   <input
                     type="checkbox"
                     checked={notificationPrefs.favoriteMatchStart}
+                    aria-label="Favori takım maç başlangıcı bildirimlerini aç veya kapat"
                     onChange={(event) =>
                       setNotificationPrefs({
                         ...notificationPrefs,
@@ -542,6 +544,7 @@ export default function ProfilePage() {
                   <input
                     type="checkbox"
                     checked={notificationPrefs.favoriteMatchResult}
+                    aria-label="Favori takım maç sonucu bildirimlerini aç veya kapat"
                     onChange={(event) =>
                       setNotificationPrefs({
                         ...notificationPrefs,
