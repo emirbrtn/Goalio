@@ -1,5 +1,5 @@
 # Onur Eken'in REST API Metotlari
-**API Test Videosu:**[YouTube Linki] (https://youtu.be/qbRot2VPBa8)
+**API Test Videosu:** [YouTube Linki](https://youtu.be/qbRot2VPBa8)
 
 # Goalio - Frontend ve API Entegrasyon Dokümantasyonu
 
