@@ -1,6 +1,6 @@
 # Onur Eken'in REST API Metotlari
 
-**API Test Videosu:**[YouTube Linki] (https://youtu.be/nie0vCso7f8)
+**API Test Videosu:** [YouTube Linki](https://youtu.be/nie0vCso7f8)
 
 ---
 
