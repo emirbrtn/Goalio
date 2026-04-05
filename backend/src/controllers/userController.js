@@ -478,12 +478,16 @@ exports.listUserPredictions = async (req, res) => {
           homeTeam: { name: "Bilinmiyor", logo: "" },
           awayTeam: { name: "Bilinmiyor", logo: "" },
         };
+        const normalizedMatchId = String(prediction.matchId || "").trim();
 
-        if (token) {
+        if (token && /^\d+$/.test(normalizedMatchId)) {
           try {
             const response = await fetch(
-              `https://api.sportmonks.com/v3/football/fixtures/${prediction.matchId}?api_token=${token}&include=participants;scores;state;league`,
+              `https://api.sportmonks.com/v3/football/fixtures/${normalizedMatchId}?api_token=${token}&include=participants;scores;state;league`,
             );
+            if (!response.ok) {
+              throw new Error(`fixture-fetch-failed:${response.status}`);
+            }
             const json = await response.json();
             const fixture = json.data || {};
             const participants = fixture.participants || [];
@@ -535,6 +539,10 @@ exports.saveUserPrediction = async (req, res) => {
 
     if (!matchId) {
       return res.status(400).json({ message: "Mac kimligi gerekli" });
+    }
+
+    if (!/^\d+$/.test(matchId)) {
+      return res.status(400).json({ message: "Gecersiz mac kimligi" });
     }
 
     if (!allowedPredictionResults.has(predictedResult)) {
