@@ -10,7 +10,7 @@ async function fetchSM(endpoint) {
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error(`SportMonks request failed: ${response.status}`);
+    throw new Error(`SportMonks request failed: ${response.status}`);    
   }
 
   const json = await response.json();
