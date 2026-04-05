@@ -9,9 +9,10 @@ Bu dokümanda, web uygulamasının kullanıcı arayüzü (UI) ve kullanıcı den
 ## Grup Üyelerinin Web Frontend Görevleri
 
 
-1. [Emircan Bartan'ın Web Frontend Görevleri](Emircan-Bartan/Emircan-Bartan-Web-Frontend-Gorevleri.md)
-2. [Murat Koçgürbüz'ün Web Frontend Görevleri](Murat-Kocgurbuz/Murat-Kocgurbuz-Web-Frontend-Gorevleri.md)
-3. [Onur Eken'in Web Frontend Görevleri](Onur-Eken/Onur-Eken-Web-Frontend-Gorevleri.md)
+
+1. [Emircan Bartan'ın Web Frontend Görevleri](Emircan%20Bartan/Emircan-Bartan-Web-Frontend-Gorevleri.md)
+2. [Murat Koçgürbüz'ün Web Frontend Görevleri](Murat%20Ko%C3%A7g%C3%BCrb%C3%BCz/Murat-Kocgurbuz-Web-Frontend-Gorevleri.md)
+3. [Onur Eken'in Web Frontend Görevleri](Onur%20Eken/Onur-Eken-Web-Frontend-Gorevleri.md)
 
 ---
 
