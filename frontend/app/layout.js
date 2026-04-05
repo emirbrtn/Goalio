@@ -11,12 +11,12 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="tr">
-      <body className="min-h-screen bg-[#0f172a] font-sans text-slate-300 lg:flex lg:h-screen lg:overflow-hidden">
+      <body className="flex h-screen overflow-hidden bg-[#0f172a] font-sans text-slate-300">
         <NotificationsProvider disabled={isAuthPage}>
           {!isAuthPage && <Sidebar />}
 
-          <main className={`flex min-w-0 flex-1 flex-col ${isAuthPage ? 'w-full' : ''} lg:overflow-hidden`}>
-            <div className="flex-1 overflow-x-hidden lg:min-h-0 lg:overflow-y-auto">
+          <main className={`flex h-full flex-1 flex-col overflow-hidden ${isAuthPage ? 'w-full' : ''}`}>
+            <div className="flex-1 overflow-y-auto">
               {children}
             </div>
           </main>

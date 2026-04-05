@@ -3,7 +3,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const app = require("./src/app");
-const { ensureDb } = require("./src/utils/dbRuntime");
+const { ensureDb } = require("./src/utils/db");
 const { migrateLegacyData } = require("./src/utils/legacyMigration");
 
 const PORT = process.env.PORT || 5000;

@@ -240,10 +240,6 @@ export function formatLiveMinute(match) {
 
   const rawState = getRawMatchState(match);
   const startedAt = parseMatchDate(match?.startTime || match?.date)?.getTime() || 0;
-  const currentPeriod =
-    match?.sportsmonkData?.currentPeriod ||
-    match?.sportsmonkData?.currentperiod ||
-    null;
 
   if (isHalftimeState(rawState)) {
     return "Devre Arası";
@@ -251,8 +247,6 @@ export function formatLiveMinute(match) {
 
   const minute = firstLiveNumber([
     match?.minute,
-    currentPeriod?.minutes,
-    currentPeriod?.minute,
     match?.sportsmonkData?.minute,
     match?.sportsmonkData?.time?.minute,
     match?.sportsmonkData?.state?.minute,
@@ -261,23 +255,14 @@ export function formatLiveMinute(match) {
   const extraMinute = firstLiveNumber([
     match?.extraMinute,
     match?.extra_minute,
-    currentPeriod?.extra_minute,
     match?.sportsmonkData?.extra_minute,
     match?.sportsmonkData?.time?.extra_minute,
+    match?.sportsmonkData?.time?.added_time,
     match?.sportsmonkData?.state?.extra_minute,
+    match?.sportsmonkData?.state?.added_time,
     match?.sportsmonkData?.state?.clock?.extra_minute,
   ]);
   const latestEvent = getLatestEventMinute(match);
-  let displayMinute = minute;
-  let displayExtraMinute = extraMinute;
-
-  if (isFirstHalfState(rawState) && minute > 45) {
-    displayMinute = 45;
-    displayExtraMinute = minute - 45;
-  } else if (isSecondHalfState(rawState) && minute > 90) {
-    displayMinute = 90;
-    displayExtraMinute = minute - 90;
-  }
 
   if (!minute && !extraMinute) {
     if (isHalftimeState(rawState)) {
@@ -329,6 +314,8 @@ export function formatLiveMinute(match) {
     return "";
   }
 
-  if (displayExtraMinute > 0) return `${displayMinute}+${displayExtraMinute}'`;
-  return `${displayMinute}'`;
+  if (extraMinute > 0) return `${minute}+${extraMinute}'`;
+  if (isFirstHalfState(rawState) && minute > 45) return `45+${minute - 45}'`;
+  if (isSecondHalfState(rawState) && minute > 90) return `90+${minute - 90}'`;
+  return `${minute}'`;
 }
