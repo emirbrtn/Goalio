@@ -28,4 +28,4 @@
 
 **8.Maç Tahmini Görüntüleme**
 - **API Metodu:** `GET /predictions/{matchId}`
-- **Açıklama:** Belirli bir maç tahmininin görüntülenmesini sağlar.(Yapay Zeka)
+- **Açıklama:** Belirli bir maç tahmininin görüntülenmesini sağlar. (Yapay Zeka)

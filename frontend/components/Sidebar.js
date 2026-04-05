@@ -15,8 +15,6 @@ import {
   ChevronRight,
   LayoutGrid,
   LogOut,
-  Menu,
-  X,
 } from 'lucide-react';
 import { leagueList } from '@/lib/leagueConfig';
 
@@ -24,7 +22,6 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const syncUser = () => {
@@ -58,10 +55,6 @@ export default function Sidebar() {
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
 
   const isMenuItemActive = (href) => {
     if (href === '/') return pathname === '/';
@@ -98,46 +91,14 @@ export default function Sidebar() {
   }));
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="fixed left-4 top-4 z-[110] flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700/70 bg-[#0f172a]/90 text-slate-200 shadow-[0_18px_45px_rgba(2,6,23,0.45)] backdrop-blur-xl transition-all hover:border-blue-500/40 hover:text-white lg:hidden"
-        aria-label="Menüyü Aç"
-      >
-        <Menu size={18} />
-      </button>
-
-      <div
-        className={`fixed inset-0 z-[99] bg-slate-950/60 backdrop-blur-sm transition-opacity duration-200 lg:hidden ${
-          isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-        }`}
-        onClick={() => setIsOpen(false)}
-      />
-
-      <aside
-        className={`custom-scrollbar fixed inset-y-0 left-0 z-[100] flex w-[280px] max-w-[85vw] flex-col overflow-y-auto border-r border-slate-700/50 bg-[#1e293b]/95 shadow-[0_28px_80px_rgba(2,6,23,0.6)] backdrop-blur-md transition-transform duration-300 lg:static lg:z-auto lg:h-full lg:w-64 lg:max-w-none lg:translate-x-0 lg:shadow-none ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-      <div className="flex shrink-0 items-start justify-between gap-4 p-6">
+    <aside className="custom-scrollbar flex h-full w-64 flex-col overflow-y-auto border-r border-slate-700/50 bg-[#1e293b]/80 backdrop-blur-md">
+      <div className="shrink-0 p-6">
         <Link href="/" className="inline-block">
           <h1 className="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-4xl font-black text-transparent drop-shadow-[0_0_10px_rgba(96,165,250,0.2)] transition-all duration-300 hover:scale-105">
             GOALIO
           </h1>
         </Link>
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-700 bg-[#111827]/70 text-slate-300 transition-colors hover:border-blue-500/40 hover:text-white lg:hidden"
-          aria-label="Menüyü Kapat"
-        >
-          <X size={18} />
-        </button>
-      </div>
-
-      <div className="px-6">
-        <p className="text-xs font-medium tracking-tight text-slate-400">Canli skor ve yapay zeka tahminleri</p>
+        <p className="mt-2 text-xs font-medium tracking-tight text-slate-400">Canli skor ve yapay zeka tahminleri</p>
       </div>
 
       <nav className="space-y-1 px-4">
@@ -242,7 +203,6 @@ export default function Sidebar() {
           </button>
         </div>
       ) : null}
-      </aside>
-    </>
+    </aside>
   );
 }

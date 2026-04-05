@@ -1,5 +1,3 @@
-const { normalizeMatchState } = require("../utils/matchState");
-
 const predictionCache = new Map();
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
@@ -26,6 +24,12 @@ function clamp(value, min, max) {
 function round(value, digits = 2) {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
+}
+
+function normalizeState(state) {
+  if (["INPLAY", "HT", "ET", "PEN_LIVE"].includes(state)) return "live";
+  if (["FT", "AET", "FT_PEN"].includes(state)) return "finished";
+  return "scheduled";
 }
 
 function extractTeams(fixture) {
@@ -72,7 +76,7 @@ function readStandingValue(entry, code) {
 function mapFinishedFixture(fixture) {
   const teams = extractTeams(fixture);
   const state = fixture?.state?.state || "NS";
-  const status = normalizeMatchState(state);
+  const status = normalizeState(state);
 
   return {
     id: String(fixture?.id || ""),
@@ -214,10 +218,8 @@ function buildNarrativeSummary(primaryOutcome, teams, factors) {
   return [firstSentence, secondSentence, closingSentence].filter(Boolean).join(" ");
 }
 
-async function buildPrediction(matchId, options = {}) {
-  const { allowStartedSnapshot = false } = options;
-  const cacheKey = `${String(matchId)}:${allowStartedSnapshot ? "hero" : "scheduled"}`;
-  const cached = predictionCache.get(cacheKey);
+async function buildPrediction(matchId) {
+  const cached = predictionCache.get(String(matchId));
   if (cached && Date.now() - cached.time < CACHE_TTL_MS) {
     return cached.data;
   }
@@ -227,8 +229,8 @@ async function buildPrediction(matchId, options = {}) {
     throw new Error("Match not found");
   }
 
-  const matchStatus = normalizeMatchState(fixture?.state?.state || "NS");
-  if (!allowStartedSnapshot && matchStatus !== "scheduled") {
+  const matchStatus = normalizeState(fixture?.state?.state || "NS");
+  if (matchStatus !== "scheduled") {
     const error = new Error("Prediction only available before kickoff");
     error.status = 400;
     throw error;
@@ -253,7 +255,6 @@ async function buildPrediction(matchId, options = {}) {
   ]);
 
   const fixtures = (Array.isArray(seasonData?.fixtures) ? seasonData.fixtures : [])
-    .filter((seasonFixture) => String(seasonFixture?.id || "") !== String(matchId))
     .map(mapFinishedFixture)
     .filter(Boolean);
 
@@ -381,7 +382,7 @@ async function buildPrediction(matchId, options = {}) {
     },
   };
 
-  predictionCache.set(cacheKey, {
+  predictionCache.set(String(matchId), {
     time: Date.now(),
     data: prediction,
   });
@@ -397,18 +398,6 @@ exports.getMatchPrediction = async (req, res) => {
     const status = error.status || 500;
     return res.status(status).json({
       message: status === 400 ? "AI tahmini sadece başlamamış maçlarda üretilir." : "Tahmin getirilemedi.",
-    });
-  }
-};
-
-exports.getHeroPrediction = async (req, res) => {
-  try {
-    const prediction = await buildPrediction(req.params.matchId, { allowStartedSnapshot: true });
-    return res.json(prediction);
-  } catch (error) {
-    const status = error.status || 500;
-    return res.status(status).json({
-      message: "Vitrin tahmini getirilemedi.",
     });
   }
 };
