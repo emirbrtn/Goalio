@@ -22,9 +22,9 @@
 - **API Metodu:** `GET /matches/history`
 - **Açıklama:** : Kullanıcının geçmiş maçları görüntülemesini sağlar.
 
-**Maç Arama**
-- **API Metodu:** `GET /matches/search?q={keyword}`
-- **Açıklama:** : Maçlar arasında arama yapılmasını sağlar.
+**Takım ve Oyuncu Arama**
+- **API Metodu:** `GET /teams/search?q={keyword}`
+- **Açıklama:** : Kullanıcının takımlar arasında anahtar kelimeye göre arama yapmasını sağlar.
 
 **Tahmin Silme**
 - **API Metodu:** `DELETE /users/{id}/predictions/{predictionId}`
