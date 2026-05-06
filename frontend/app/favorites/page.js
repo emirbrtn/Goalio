@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import PlayerProfileModal from "../../components/PlayerProfileModal";
 
 export default function FavoritesPage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [favTeams, setFavTeams] = useState([]);

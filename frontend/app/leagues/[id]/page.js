@@ -51,7 +51,7 @@ export default function LeagueOverviewPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const router = useRouter();
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
 
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);

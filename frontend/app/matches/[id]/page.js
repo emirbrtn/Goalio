@@ -12,7 +12,7 @@ function resolvePlayerId(player) {
 }
 
 export default function MatchDetailPage() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
   const params = useParams();
   const router = useRouter();
 

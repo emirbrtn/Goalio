@@ -81,7 +81,7 @@ function getNotificationMeta(type) {
 }
 
 export default function ProfilePage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
   const router = useRouter();
   const {
     notifications,

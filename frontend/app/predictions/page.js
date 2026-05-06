@@ -49,7 +49,7 @@ function getPrimaryPick(probabilities) {
 }
 
 export default function PredictionsPage() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
   const [matchList, setMatchList] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [prediction, setPrediction] = useState(null);

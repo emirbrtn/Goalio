@@ -55,7 +55,7 @@ function getActualResult(match) {
 }
 
 export function NotificationsProvider({ children, disabled = false }) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
   const [notifications, setNotifications] = useState([]);
   const [prefs, setPrefs] = useState(DEFAULT_NOTIFICATION_PREFS);
   const [isReady, setIsReady] = useState(false);

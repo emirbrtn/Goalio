@@ -8,7 +8,7 @@ import { leagueList } from "@/lib/leagueConfig";
 import { filterActiveLiveMatches, sortLiveMatches, sortMatchesByStart } from "@/lib/matchPriority";
 
 function LiveScoresContent() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeLeague = searchParams.get("league") || "all";
