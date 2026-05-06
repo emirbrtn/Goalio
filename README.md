@@ -38,8 +38,8 @@ Kısacası Goalio; canlı skor takibi, takım aidiyeti ve veri bilimi tabanlı t
 > [Maçkolik](https://www.mackolik.com/canli-sonuclar)
 
 ## Proje Linkleri
-- **REST API Adresi:** [https://goalio-ten.vercel.app/api](https://goalio-ten.vercel.app/api)
-- **Web Frontend Adresi:** [https://goalio-ten.vercel.app/](https://goalio-ten.vercel.app/)
+- **REST API Adresi:** [https://goalio-two.vercel.app/api](https://goalio-two.vercel.app/api)
+- **Web Frontend Adresi:** [https://goalio-two.vercel.app/](https://goalio-two.vercel.app/)
 
 
 ## Klasör Yapısı
