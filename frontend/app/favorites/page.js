@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import PlayerProfileModal from "../../components/PlayerProfileModal";
 
 export default function FavoritesPage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [favTeams, setFavTeams] = useState([]);
@@ -81,13 +81,17 @@ export default function FavoritesPage() {
     setUser(nextUser);
     const userId = getUserStorageId(nextUser);
     const token = typeof window !== "undefined" ? localStorage.getItem("goalio_token") : null;
+    const storedTeams = readFavoriteStorage("teams", nextUser);
+    const storedPlayers = readFavoriteStorage("players", nextUser);
+
+    setFavTeams(storedTeams);
+    setFavPlayers(storedPlayers);
 
     if (userId && token) {
       fetch(`${apiBase}/users/${userId}/favorites-data`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        cache: "no-store",
       })
         .then(async (response) => {
           if (!response.ok) throw new Error("favorites-fetch-failed");
@@ -106,8 +110,8 @@ export default function FavoritesPage() {
       return;
     }
 
-    setFavTeams([]);
-    setFavPlayers([]);
+    setFavTeams(storedTeams);
+    setFavPlayers(storedPlayers);
   };
 
   useEffect(() => {

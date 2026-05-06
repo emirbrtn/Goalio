@@ -16,6 +16,7 @@ router.put("/:id/notifications", auth, controller.updateNotificationPrefs);
 router.get("/:id/notifications/history", auth, controller.listUserNotifications);
 router.post("/:id/notifications/history/sync", auth, controller.syncUserNotifications);
 router.put("/:id/notifications/history/read-all", auth, controller.markAllNotificationsRead);
+router.delete("/:id/notifications/history", auth, controller.deleteAllUserNotifications);
 router.delete("/:id/notifications/history/:notificationId", auth, controller.deleteUserNotification);
 
 // Favori Rotaları-1

@@ -10,7 +10,7 @@ export default function LeagueTeamsPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const router = useRouter();
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +61,7 @@ export default function LeagueTeamsPage() {
   }
 
   return (
-    <div className="bg-[#0f172a] min-h-screen p-8 text-slate-300">
+    <div className="min-h-screen bg-[#0f172a] p-4 text-slate-300 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <button
           onClick={() => router.push(`/leagues/${current.key}`)}
@@ -70,35 +70,35 @@ export default function LeagueTeamsPage() {
           <ArrowLeft size={16} /> Lig Ozetine Don
         </button>
 
-        <div className="flex flex-col gap-6 lg:flex-row lg:justify-between lg:items-center mb-10">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white rounded-2xl border border-slate-700 p-3 flex items-center justify-center">
+        <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-slate-700 bg-white p-3">
               <img src={current.logo} alt={current.title} className="max-h-full object-contain" />
             </div>
-            <div>
-              <h1 className="text-4xl font-black text-white italic uppercase">{current.title}</h1>
+            <div className="min-w-0">
+              <h1 className="break-words text-3xl font-black uppercase italic text-white sm:text-4xl">{current.title}</h1>
               <p className="text-xs font-bold text-slate-500 uppercase">{current.country} • {teams.length} TAKIM</p>
             </div>
           </div>
-          <div className="relative">
+          <div className="relative w-full lg:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
             <input
               type="text"
               placeholder="Takim ara..."
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              className="pl-10 pr-4 py-2 bg-[#1e293b] border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500"
+              className="w-full rounded-xl border border-slate-700 bg-[#1e293b] py-2 pl-10 pr-4 text-white focus:border-blue-500 focus:outline-none"
             />
           </div>
         </div>
 
         {filteredTeams.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-5 xl:gap-6">
             {filteredTeams.map((team) => (
               <div
                 key={team._id}
                 onClick={() => router.push(`/?search=${encodeURIComponent(team.name)}`)}
-                className="bg-[#1e293b] p-8 rounded-[35px] flex flex-col items-center gap-4 hover:scale-105 transition-all cursor-pointer border border-slate-700/50 shadow-xl"
+                className="flex cursor-pointer flex-col items-center gap-4 rounded-[28px] border border-slate-700/50 bg-[#1e293b] p-6 shadow-xl transition-all hover:scale-105 sm:rounded-[35px] sm:p-8"
               >
                 <div className="w-20 h-20 bg-white rounded-2xl p-4 flex items-center justify-center border-2 border-slate-800">
                   <img src={team.logo} alt={team.name} className="max-h-full object-contain" />

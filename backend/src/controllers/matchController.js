@@ -1,55 +1,61 @@
 const { getLeagueByKey } = require("../utils/leagueConfig");
+const { normalizeMatchState } = require("../utils/matchState");
 
 const memoryCache = {};
 const CACHE_TIME_MS = 2 * 60 * 1000;
+const LIVE_CACHE_TIME_MS = 15 * 1000;
 const LIVE_MATCH_MAX_WINDOW_MS = 150 * 60 * 1000;
 const EXTENDED_LIVE_MATCH_MAX_WINDOW_MS = 210 * 60 * 1000;
+const DEFAULT_MAX_PAGES = 6;
 
-function mapMatchStatus(rawState) {
-  const state = String(rawState || "NS").toUpperCase();
-
-  if (
-    state.startsWith("INPLAY") ||
-    ["HT", "ET", "PEN_LIVE", "BREAK", "INTERRUPTED"].includes(state)
-  ) {
-    return "live";
-  }
-
-  if (
-    state.startsWith("FT") ||
-    ["AET", "FT_PEN", "AFTER_PENALTIES", "AWARDED", "CANCELLED", "POSTPONED"].includes(state)
-  ) {
-    return "finished";
-  }
-
-  return "scheduled";
-}
-
-async function fetchFromSportsmonks(endpoint) {
+async function fetchSportsmonksPage(endpoint, page = 1) {
   const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
-  if (!token) return [];
+  if (!token) return { data: [], hasMore: false };
 
-  const now = Date.now();
-  if (memoryCache[endpoint] && now - memoryCache[endpoint].time < CACHE_TIME_MS) {
-    return memoryCache[endpoint].data;
-  }
-
-  const includes = "include=participants;scores;state;league;events.type";
+  const includes = "include=participants;scores;state;league;events.type;currentPeriod";
+  const pageQuery = page > 1 ? `&page=${page}` : "";
   const url = endpoint.includes("?")
-    ? `https://api.sportmonks.com/v3/football/${endpoint}&api_token=${token}&${includes}`
-    : `https://api.sportmonks.com/v3/football/${endpoint}?api_token=${token}&${includes}`;
+    ? `https://api.sportmonks.com/v3/football/${endpoint}&api_token=${token}&${includes}${pageQuery}`
+    : `https://api.sportmonks.com/v3/football/${endpoint}?api_token=${token}&${includes}${pageQuery}`;
 
   try {
     const response = await fetch(url);
-    if (!response.ok) return [];
+    if (!response.ok) return { data: [], hasMore: false };
 
     const json = await response.json();
-    const data = json.data || [];
-    memoryCache[endpoint] = { data, time: now };
-    return data;
+    const data = Array.isArray(json.data) ? json.data : json.data ? [json.data] : [];
+
+    return {
+      data,
+      hasMore: Boolean(json?.pagination?.has_more),
+    };
   } catch (error) {
-    return [];
+    return { data: [], hasMore: false };
   }
+}
+
+async function fetchFromSportsmonks(endpoint, options = {}) {
+  const { maxPages = 1, cacheTimeMs = CACHE_TIME_MS } = options;
+  const cacheKey = `${endpoint}::pages=${maxPages}`;
+
+  const now = Date.now();
+  if (memoryCache[cacheKey] && now - memoryCache[cacheKey].time < cacheTimeMs) {
+    return memoryCache[cacheKey].data;
+  }
+
+  const collected = [];
+
+  for (let page = 1; page <= Math.max(1, maxPages); page += 1) {
+    const { data, hasMore } = await fetchSportsmonksPage(endpoint, page);
+    collected.push(...data);
+
+    if (!hasMore) {
+      break;
+    }
+  }
+
+  memoryCache[cacheKey] = { data: collected, time: now };
+  return collected;
 }
 
 function mapSportsmonksMatch(match) {
@@ -75,7 +81,7 @@ function mapSportsmonksMatch(match) {
     ) || {};
 
   const state = match.state?.state || "NS";
-  const status = mapMatchStatus(state);
+  const status = normalizeMatchState(state);
 
   return {
     _id: String(match.id),
@@ -117,8 +123,12 @@ function firstNumericValue(values = []) {
 }
 
 function extractLiveMinute(match) {
+  const currentPeriod = match?.currentPeriod || match?.currentperiod || null;
+
   return {
     minute: firstNumericValue([
+      currentPeriod?.minutes,
+      currentPeriod?.minute,
       match?.minute,
       match?.time?.minute,
       match?.state?.minute,
@@ -126,11 +136,10 @@ function extractLiveMinute(match) {
       match?.periods?.current?.minute,
     ]),
     extraMinute: firstNumericValue([
+      currentPeriod?.extra_minute,
       match?.extra_minute,
       match?.time?.extra_minute,
-      match?.time?.added_time,
       match?.state?.extra_minute,
-      match?.state?.added_time,
       match?.state?.clock?.extra_minute,
       match?.periods?.current?.extra_minute,
     ]),
@@ -221,7 +230,9 @@ exports.listMatches = async (req, res) => {
   try {
     const start = new Date(Date.now() - 5 * 86400000).toISOString().split("T")[0];
     const end = new Date(Date.now() + 15 * 86400000).toISOString().split("T")[0];
-    let apiMatches = await fetchFromSportsmonks(`fixtures/between/${start}/${end}`);
+    let apiMatches = await fetchFromSportsmonks(`fixtures/between/${start}/${end}`, {
+      maxPages: DEFAULT_MAX_PAGES,
+    });
     if (!Array.isArray(apiMatches)) apiMatches = apiMatches ? [apiMatches] : [];
 
     let mapped = apiMatches.map(mapSportsmonksMatch).filter(Boolean);
@@ -235,7 +246,9 @@ exports.listMatches = async (req, res) => {
 
 exports.listLiveMatches = async (req, res) => {
   try {
-    let apiMatches = await fetchFromSportsmonks("livescores/inplay");
+    let apiMatches = await fetchFromSportsmonks("livescores/inplay", {
+      cacheTimeMs: LIVE_CACHE_TIME_MS,
+    });
     if (!Array.isArray(apiMatches)) apiMatches = apiMatches ? [apiMatches] : [];
 
     const liveMatches = filterByLeague(
@@ -253,7 +266,9 @@ exports.listHistoryMatches = async (req, res) => {
   try {
     const end = new Date().toISOString().split("T")[0];
     const start = new Date(Date.now() - 15 * 86400000).toISOString().split("T")[0];
-    let apiMatches = await fetchFromSportsmonks(`fixtures/between/${start}/${end}`);
+    let apiMatches = await fetchFromSportsmonks(`fixtures/between/${start}/${end}`, {
+      maxPages: DEFAULT_MAX_PAGES,
+    });
     if (!Array.isArray(apiMatches)) apiMatches = apiMatches ? [apiMatches] : [];
 
     const history = filterByLeague(
@@ -277,8 +292,12 @@ exports.searchMatches = async (req, res) => {
     const rangeStart = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
     const rangeEnd = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
 
-    let historicMatches = await fetchFromSportsmonks(`fixtures/search/${encodeURIComponent(req.query.q)}`);
-    let currentMatches = await fetchFromSportsmonks(`fixtures/between/${rangeStart}/${rangeEnd}`);
+    let historicMatches = await fetchFromSportsmonks(`fixtures/search/${encodeURIComponent(req.query.q)}`, {
+      maxPages: 2,
+    });
+    let currentMatches = await fetchFromSportsmonks(`fixtures/between/${rangeStart}/${rangeEnd}`, {
+      maxPages: DEFAULT_MAX_PAGES,
+    });
 
     if (!Array.isArray(historicMatches)) historicMatches = historicMatches ? [historicMatches] : [];
     if (!Array.isArray(currentMatches)) currentMatches = currentMatches ? [currentMatches] : [];
@@ -305,7 +324,13 @@ exports.debugSportsApi = async (req, res) => res.json({ status: "Aktif" });
 exports.getMatch = async (req, res) => {
   try {
     const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
-    const includes = "include=participants;scores;league;state;statistics.type;lineups.player;events.type;coaches";
+
+    if (!token) {
+      return res.status(500).json({ message: "SPORTSMONKS_API_TOKEN eksik" });
+    }
+
+    const includes =
+      "include=participants;scores;league;state;statistics.type;lineups.player;events.type;coaches;currentPeriod";
     const response = await fetch(
       `https://api.sportmonks.com/v3/football/fixtures/${req.params.matchId}?api_token=${token}&${includes}`,
     );
@@ -340,7 +365,7 @@ exports.getMatch = async (req, res) => {
     const { minute, extraMinute } = extractLiveMinute(matchData);
 
     const state = matchData.state?.state || "NS";
-    const status = mapMatchStatus(state);
+    const status = normalizeMatchState(state);
 
     return res.json({
       _id: String(matchData.id),
@@ -403,7 +428,7 @@ exports.getMatchStats = async (req, res) => {
     }
 
     const response = await fetch(
-      `https://api.sportmonks.com/v3/football/fixtures/${rawMatchId}?api_token=${token}&include=statistics;participants`,
+      `https://api.sportmonks.com/v3/football/fixtures/${rawMatchId}?api_token=${token}&include=statistics;participants`
     );
 
     if (!response.ok) {

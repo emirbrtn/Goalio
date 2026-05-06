@@ -69,11 +69,11 @@ function SummaryCard({ title, value, subtitle, tone = "blue", icon }) {
   };
 
   return (
-    <div className="rounded-[30px] border border-slate-800/90 bg-[#0d1526] p-6 shadow-[0_24px_60px_rgba(2,6,23,0.26)]">
+    <div className="rounded-[30px] border border-slate-800/90 bg-[#0d1526] p-5 shadow-[0_24px_60px_rgba(2,6,23,0.26)] sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">{title}</div>
-          <div className="mt-3 text-4xl font-black tracking-tight text-white">{value}</div>
+          <div className="mt-3 break-words text-3xl font-black tracking-tight text-white sm:text-4xl">{value}</div>
           <div className="mt-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{subtitle}</div>
         </div>
         <div className={`rounded-2xl border px-3 py-3 ${tones[tone]}`}>{icon}</div>
@@ -134,7 +134,7 @@ function PredictionCard({ prediction, onDelete, router, highlight = "current" })
   const activeStyle = styleMap[highlight] || styleMap.current;
 
   return (
-    <div className={`group relative overflow-hidden rounded-[34px] border p-6 transition-all duration-300 ${activeStyle.container}`}>
+    <div className={`group relative overflow-hidden rounded-[34px] border p-5 transition-all duration-300 sm:p-6 ${activeStyle.container}`}>
       <div className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl ${activeStyle.glow}`} />
       {isCurrent ? (
         <>
@@ -144,9 +144,9 @@ function PredictionCard({ prediction, onDelete, router, highlight = "current" })
         </>
       ) : null}
 
-      <div className="relative z-10 flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
+      <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
             {leagueLogo ? (
               <div className="flex h-7 w-7 items-center justify-center rounded-xl border border-white/10 bg-white/5 p-1.5">
                 <img
@@ -156,7 +156,7 @@ function PredictionCard({ prediction, onDelete, router, highlight = "current" })
                 />
               </div>
             ) : null}
-            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">
+            <div className="min-w-0 truncate text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">
               {formatLeagueName(prediction?.match?.league) || "Bilinmeyen Lig"}
             </div>
           </div>
@@ -165,7 +165,7 @@ function PredictionCard({ prediction, onDelete, router, highlight = "current" })
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <span
             className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${activeStyle.badge} ${
               isCurrent ? "shadow-[0_0_0_1px_rgba(96,165,250,0.12)]" : ""
@@ -182,28 +182,28 @@ function PredictionCard({ prediction, onDelete, router, highlight = "current" })
         </div>
       </div>
 
-      <div className="relative z-10 mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-        <div className="flex items-center justify-end gap-3 text-right">
-          <div className="min-w-0">
-            <div className="text-xl font-black tracking-tight text-white">
-              {formatTeamName(prediction?.match?.homeTeam?.name || "Ev Sahibi")}
-            </div>
-          </div>
-          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl border p-2 shadow-[0_12px_30px_rgba(2,6,23,0.22)] ${activeStyle.logoPanel}`}>
+      <div className="relative z-10 mt-6 grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+        <div className="flex items-center justify-between gap-3 text-left sm:justify-end sm:text-right">
+          <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border p-2 shadow-[0_12px_30px_rgba(2,6,23,0.22)] sm:order-2 ${activeStyle.logoPanel}`}>
             <img
               src={prediction?.match?.homeTeam?.logo || "https://cdn.sportmonks.com/images/soccer/team_placeholder.png"}
               className="max-h-full object-contain"
               alt={prediction?.match?.homeTeam?.name || "Ev Sahibi"}
             />
           </div>
+          <div className="min-w-0">
+            <div className="break-words text-lg font-black tracking-tight text-white sm:text-xl">
+              {formatTeamName(prediction?.match?.homeTeam?.name || "Ev Sahibi")}
+            </div>
+          </div>
         </div>
 
         <div
-          className={`rounded-[22px] border px-5 py-4 text-center shadow-[0_18px_40px_rgba(2,6,23,0.28)] ${activeStyle.scorePanel} ${
+          className={`rounded-[22px] border px-4 py-4 text-center shadow-[0_18px_40px_rgba(2,6,23,0.28)] sm:px-5 ${activeStyle.scorePanel} ${
             isCurrent ? "ring-1 ring-blue-300/10" : ""
           }`}
         >
-          <div className="text-3xl font-black tracking-tight text-white">{scoreText}</div>
+          <div className="text-2xl font-black tracking-tight text-white sm:text-3xl">{scoreText}</div>
           <div className="mt-2 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
             {prediction?.match?.status === "live"
               ? "Canlı"
@@ -213,8 +213,8 @@ function PredictionCard({ prediction, onDelete, router, highlight = "current" })
           </div>
         </div>
 
-        <div className="flex items-center justify-start gap-3 text-left">
-          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl border p-2 shadow-[0_12px_30px_rgba(2,6,23,0.22)] ${activeStyle.logoPanel}`}>
+        <div className="flex items-center justify-between gap-3 text-left sm:justify-start">
+          <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border p-2 shadow-[0_12px_30px_rgba(2,6,23,0.22)] ${activeStyle.logoPanel}`}>
             <img
               src={prediction?.match?.awayTeam?.logo || "https://cdn.sportmonks.com/images/soccer/team_placeholder.png"}
               className="max-h-full object-contain"
@@ -222,7 +222,7 @@ function PredictionCard({ prediction, onDelete, router, highlight = "current" })
             />
           </div>
           <div className="min-w-0">
-            <div className="text-xl font-black tracking-tight text-white">
+            <div className="break-words text-lg font-black tracking-tight text-white sm:text-xl">
               {formatTeamName(prediction?.match?.awayTeam?.name || "Deplasman")}
             </div>
           </div>
@@ -232,9 +232,9 @@ function PredictionCard({ prediction, onDelete, router, highlight = "current" })
       <div className="relative z-10 mt-6 grid gap-3 md:grid-cols-2">
         <div className={`rounded-[22px] border px-4 py-4 ${activeStyle.panel}`}>
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Senin Tahminin</div>
-          <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-2xl font-black text-white">{getPredictionLabel(prediction.predictedResult)}</span>
-            <span className="text-right text-[11px] font-black uppercase tracking-[0.18em] text-blue-200">
+            <span className="text-left text-[11px] font-black uppercase tracking-[0.18em] text-blue-200 sm:text-right">
               {getPredictionLongLabel(prediction.predictedResult, prediction.match)}
             </span>
           </div>
@@ -242,11 +242,11 @@ function PredictionCard({ prediction, onDelete, router, highlight = "current" })
 
         <div className={`rounded-[22px] border px-4 py-4 ${activeStyle.panel}`}>
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Maç Sonucu</div>
-          <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-2xl font-black text-white">
               {prediction?.match?.status === "finished" ? getPredictionLabel(actualResult) : "--"}
             </span>
-            <span className={`text-right text-[11px] font-black uppercase tracking-[0.18em] ${prediction?.match?.status === "finished" ? activeStyle.resultTone : "text-slate-400"}`}>
+            <span className={`text-left text-[11px] font-black uppercase tracking-[0.18em] sm:text-right ${prediction?.match?.status === "finished" ? activeStyle.resultTone : "text-slate-400"}`}>
               {prediction?.match?.status === "finished"
                 ? getPredictionLongLabel(actualResult, prediction.match)
                 : "Sonuç henüz netleşmedi"}
@@ -308,7 +308,7 @@ function PredictionSection({ title, subtitle, items, tone, emptyText, router, on
 }
 
 export default function MyPredictions() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
   const [predictions, setPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -326,16 +326,33 @@ export default function MyPredictions() {
 
     const user = JSON.parse(userStr);
     const token = localStorage.getItem("goalio_token");
+    const userId = user.id || user._id;
+    const cacheKey = userId ? `goalio_predictions_cache_${userId}` : null;
+
+    if (cacheKey) {
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            setPredictions(parsed);
+            setLoading(false);
+          }
+        }
+      } catch (error) {}
+    }
 
     try {
-      const res = await fetch(`${api}/users/${user.id || user._id}/predictions`, {
+      const res = await fetch(`${api}/users/${userId}/predictions`, {
         headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
       });
       const data = await res.json();
       const safeData = Array.isArray(data) ? data : [];
       safeData.sort((a, b) => new Date(b.createdOn || 0).getTime() - new Date(a.createdOn || 0).getTime());
       setPredictions(safeData);
+      if (cacheKey) {
+        sessionStorage.setItem(cacheKey, JSON.stringify(safeData));
+      }
     } catch (error) {
       console.error("Tahminler çekilemedi:", error);
     } finally {
@@ -352,7 +369,14 @@ export default function MyPredictions() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPredictions((prev) => prev.filter((prediction) => prediction._id !== predId && prediction.id !== predId));
+      setPredictions((prev) => {
+        const next = prev.filter((prediction) => prediction._id !== predId && prediction.id !== predId);
+        const userId = user.id || user._id;
+        if (userId) {
+          sessionStorage.setItem(`goalio_predictions_cache_${userId}`, JSON.stringify(next));
+        }
+        return next;
+      });
     } catch (error) {
       console.error("Silme hatası:", error);
     }
@@ -384,18 +408,18 @@ export default function MyPredictions() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09111f] p-6 md:p-10">
+    <div className="min-h-screen bg-[#09111f] p-4 sm:p-6 md:p-10">
       <div className="mx-auto max-w-7xl space-y-10">
         <div className="border-b border-slate-800 pb-8">
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-4">
             <div className="rounded-2xl border border-blue-400/20 bg-blue-500/10 p-3">
               <Target className="text-blue-400" size={28} />
             </div>
             <div>
-              <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white">
+              <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white sm:text-4xl">
                 Senin Tahminlerin
               </h2>
-              <p className="mt-2 text-sm font-bold uppercase tracking-[0.18em] text-slate-500">
+              <p className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500 sm:text-sm">
                 Güncel tahminlerini ve kapanan maç performansını tek merkezden takip et
               </p>
             </div>

@@ -41,6 +41,25 @@ async function fetchSM(endpoint) {
   }
 }
 
+async function fetchSMJson(endpoint) {
+  const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
+  if (!token) return null;
+
+  const separator = endpoint.includes("?") ? "&" : "?";
+  const url = `https://api.sportmonks.com/v3/football/${endpoint}${separator}api_token=${token}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    return null;
+  }
+}
+
 function pickTeam(player) {
   return (
     player?.team ||
@@ -230,6 +249,247 @@ function extractLatestCompetitionStats(player, teamId) {
   });
 }
 
+function matchesTeamStat(statGroup, teamId) {
+  if (!teamId) return false;
+  const candidates = [
+    statGroup?.team?.id,
+    statGroup?.team_id,
+    statGroup?.participant_id,
+    statGroup?.participant?.id,
+  ];
+
+  return candidates.some((candidate) => String(candidate || "") === String(teamId));
+}
+
+function selectStatGroups(player, teamId) {
+  const statistics = Array.isArray(player?.statistics) ? player.statistics : [];
+  if (statistics.length === 0) return [];
+
+  const currentTeamStats = statistics.filter((entry) => matchesTeamStat(entry, teamId));
+  const currentSeasonTeamStats = currentTeamStats.filter((entry) => entry?.season?.is_current);
+  if (currentSeasonTeamStats.length > 0) {
+    return currentSeasonTeamStats;
+  }
+
+  if (currentTeamStats.length > 0) {
+    const primaryTeamStat = pickPrimaryStat(currentTeamStats);
+    return primaryTeamStat ? [primaryTeamStat] : [];
+  }
+
+  const currentSeasonStats = statistics.filter((entry) => entry?.season?.is_current);
+  if (currentSeasonStats.length > 0) {
+    return currentSeasonStats;
+  }
+
+  const primaryStat = pickPrimaryStat(statistics);
+  return primaryStat ? [primaryStat] : [];
+}
+
+function extractCareerClubs(player, currentTeamId) {
+  const transferEntries = Array.isArray(player?.careerTransfers) ? player.careerTransfers : [];
+  const teamEntries = Array.isArray(player?.teams) ? player.teams : [];
+
+  const transferClubs = transferEntries
+    .flatMap((entry) => {
+      const fromTeam = entry?.fromTeam || entry?.fromteam || entry?.from_team || {};
+      const toTeam = entry?.toTeam || entry?.toteam || entry?.to_team || {};
+      const date = entry?.date || entry?.starting_at || entry?.start || "";
+
+      return [
+        {
+          team: fromTeam,
+          start: "",
+          end: date,
+          isCurrent: false,
+          source: "transfer-from",
+        },
+        {
+          team: toTeam,
+          start: date,
+          end: "",
+          isCurrent: String(toTeam?.id || "") === String(currentTeamId || ""),
+          source: "transfer-to",
+        },
+      ];
+    })
+    .filter((entry) => String(entry?.team?.type || "").toLowerCase() === "domestic");
+
+  const currentDomesticTeams = teamEntries
+    .map((entry) => ({
+      team: entry?.team || {},
+      start: entry?.start || "",
+      end: entry?.end || "",
+      isCurrent: String(entry?.team?.id || "") === String(currentTeamId || "") || !entry?.end,
+      source: "team",
+    }))
+    .filter((entry) => String(entry?.team?.type || "").toLowerCase() === "domestic");
+
+  const combinedEntries = [...currentDomesticTeams, ...transferClubs];
+  if (combinedEntries.length === 0) return [];
+
+  const sortedEntries = combinedEntries.sort((a, b) => {
+    const aCurrent = a?.isCurrent ? 1 : 0;
+    const bCurrent = b?.isCurrent ? 1 : 0;
+    if (aCurrent !== bCurrent) return bCurrent - aCurrent;
+
+    const aTime = new Date(a?.end || a?.start || 0).getTime();
+    const bTime = new Date(b?.end || b?.start || 0).getTime();
+    return bTime - aTime;
+  });
+
+  const clubs = [];
+  const seen = new Set();
+
+  for (const entry of sortedEntries) {
+    const team = entry?.team || {};
+    const teamId = String(team?.id || "");
+    const teamName = team?.name || "";
+    if (!teamId && !teamName) continue;
+
+    const key = teamId || teamName.toLocaleLowerCase("tr-TR");
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    clubs.push({
+      id: teamId,
+      name: teamName,
+      logo: team?.image_path || "",
+      start: entry?.start || "",
+      end: entry?.end || "",
+      isCurrent: entry?.isCurrent || String(teamId || "") === String(currentTeamId || ""),
+    });
+  }
+
+  return clubs.slice(0, 8);
+}
+
+function extractLastTransferFee(player) {
+  const transfers = (Array.isArray(player?.careerTransfers) ? player.careerTransfers : [])
+    .filter((entry) => entry?.completed !== false && entry?.amount != null)
+    .sort((a, b) => new Date(b?.date || 0).getTime() - new Date(a?.date || 0).getTime());
+
+  const latestWithFee = transfers[0];
+  if (!latestWithFee) return null;
+
+  return {
+    amount: Number(latestWithFee.amount) || 0,
+    date: latestWithFee.date || "",
+    fromTeamName:
+      latestWithFee?.fromTeam?.name ||
+      latestWithFee?.fromteam?.name ||
+      latestWithFee?.from_team?.name ||
+      "",
+    toTeamName:
+      latestWithFee?.toTeam?.name ||
+      latestWithFee?.toteam?.name ||
+      latestWithFee?.to_team?.name ||
+      "",
+  };
+}
+
+function extractSeasonHistory(player) {
+  const statistics = Array.isArray(player?.statistics) ? player.statistics : [];
+  if (statistics.length === 0) return [];
+
+  const grouped = new Map();
+
+  for (const statGroup of statistics) {
+    const season = statGroup?.season || {};
+    if (!season?.id || season?.is_current) continue;
+
+    const teamId = String(
+      statGroup?.team?.id ||
+      statGroup?.team_id ||
+      statGroup?.participant?.id ||
+      statGroup?.participant_id ||
+      "",
+    );
+    const key = `${season.id}:${teamId || "unknown"}`;
+
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+    grouped.get(key).push(statGroup);
+  }
+
+  const history = [];
+
+  for (const entries of grouped.values()) {
+    const representative =
+      pickPrimaryStat(
+        entries.filter((entry) => String(entry?.season?.league?.type || "").toLowerCase() === "domestic"),
+      ) || pickPrimaryStat(entries);
+
+    if (!representative?.season?.id) continue;
+
+    const stats = extractStats(entries);
+    const hasUsefulValue = [
+      stats.appearances,
+      stats.lineups,
+      stats.minutes,
+      stats.goals,
+      stats.assists,
+      stats.rating,
+    ].some((value) => value != null);
+
+    if (!hasUsefulValue) continue;
+
+    history.push({
+      seasonId: String(representative.season.id),
+      seasonName: representative.season?.name || "",
+      teamId: String(
+        representative?.team?.id ||
+        representative?.team_id ||
+        representative?.participant?.id ||
+        representative?.participant_id ||
+        "",
+      ),
+      teamName:
+        representative?.team?.name ||
+        representative?.participant?.name ||
+        "",
+      teamLogo:
+        representative?.team?.image_path ||
+        representative?.participant?.image_path ||
+        "",
+      leagueName: representative?.season?.league?.name || "",
+      leagueLogo: representative?.season?.league?.image_path || "",
+      finishedAt:
+        representative?.season?.finished_at ||
+        representative?.season?.ending_at ||
+        representative?.season?.starting_at ||
+        "",
+      stats,
+    });
+  }
+
+  return history
+    .sort((a, b) => new Date(b.finishedAt || 0).getTime() - new Date(a.finishedAt || 0).getTime())
+    .slice(0, 6);
+}
+
+async function fetchPlayerTransfers(playerId) {
+  const collected = [];
+
+  for (let page = 1; page <= 4; page += 1) {
+    const payload = await fetchSMJson(
+      `transfers/players/${playerId}?include=fromTeam;toTeam;type&order=desc&per_page=50&page=${page}`,
+    );
+    if (!payload) break;
+
+    const entries = Array.isArray(payload?.data) ? payload.data : [];
+    collected.push(...entries);
+
+    const hasMore =
+      Boolean(payload?.pagination?.has_more) ||
+      Boolean(payload?.pagination?.next_page_url) ||
+      Boolean(payload?.meta?.pagination?.has_more);
+    if (!hasMore || entries.length === 0) break;
+  }
+
+  return collected;
+}
+
 function mapPlayerSearch(player) {
   if (!player?.id) return null;
 
@@ -249,13 +509,14 @@ function mapPlayerSearch(player) {
 
 function mapPlayerProfile(player) {
   const team = pickCurrentTeam(player);
-  const primaryStat = pickPrimaryStat(player?.statistics);
+  const selectedStatGroups = selectStatGroups(player, team?.id);
+  const displayStat =
+    pickPrimaryStat(
+      selectedStatGroups.filter((entry) => String(entry?.season?.league?.type || "").toLowerCase() === "domestic"),
+    ) || pickPrimaryStat(selectedStatGroups);
+  const primaryStat = displayStat || pickPrimaryStat(player?.statistics);
   const league = primaryStat?.season?.league || null;
-  const fallbackStats = extractStats(primaryStat ? [primaryStat] : player?.statistics);
-  const latestStats = extractLatestCompetitionStats(player, team?.id);
-  const fallbackAppearances = Number(fallbackStats.appearances || fallbackStats.lineups || 0);
-  const latestAppearances = Number(latestStats?.appearances || latestStats?.lineups || 0);
-  const stats = latestStats && latestAppearances >= fallbackAppearances ? latestStats : fallbackStats;
+  const stats = extractStats(selectedStatGroups.length > 0 ? selectedStatGroups : (primaryStat ? [primaryStat] : player?.statistics));
 
   return {
     id: String(player?.id || ""),
@@ -278,6 +539,9 @@ function mapPlayerProfile(player) {
     countryFlag: player?.country?.image_path || "",
     teamName: team?.name || "",
     teamLogo: team?.image_path || "",
+    careerClubs: extractCareerClubs(player, team?.id),
+    lastTransferFee: extractLastTransferFee(player),
+    seasonHistory: extractSeasonHistory(player),
     leagueName: league?.name || "",
     leagueLogo: league?.image_path || "",
     seasonName: primaryStat?.season?.name || "",
@@ -346,6 +610,14 @@ exports.getPlayerProfile = async (req, res) => {
 
     if (!player) {
       return res.status(404).json({ message: "Oyuncu bulunamadi" });
+    }
+
+    const careerTransfers = await fetchPlayerTransfers(playerId);
+    if (careerTransfers.length > 0) {
+      player = {
+        ...player,
+        careerTransfers,
+      };
     }
 
     const mapped = mapPlayerProfile(player);

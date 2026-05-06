@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, CalendarDays, Flag, Footprints, Gauge, Ruler, Shield, Target, Timer, Weight, X } from "lucide-react";
+import { Activity, BadgeEuro, CalendarDays, Flag, Footprints, Gauge, Ruler, Shield, Target, Timer, Weight, X } from "lucide-react";
 
 const playerProfileCache = new Map();
 
@@ -53,7 +53,7 @@ function DetailPill({ icon: Icon, label, value, tone = "blue" }) {
   );
 }
 
-function StatCard({ label, value, accent = "blue" }) {
+function StatCard({ label, value, accent = "blue", className = "" }) {
   const accentClass = {
     blue: "from-blue-500/20 to-cyan-400/5 border-blue-500/20",
     amber: "from-amber-500/20 to-yellow-300/5 border-amber-500/20",
@@ -61,7 +61,7 @@ function StatCard({ label, value, accent = "blue" }) {
   }[accent];
 
   return (
-    <div className={`rounded-[24px] border bg-gradient-to-br ${accentClass} px-4 py-5`}>
+    <div className={`rounded-[24px] border bg-gradient-to-br ${accentClass} px-4 py-5 ${className}`}>
       <div className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">{label}</div>
       <div className="mt-2 text-2xl font-black text-white">{value ?? "--"}</div>
     </div>
@@ -88,6 +88,46 @@ function InfoBadge({ image, label, value }) {
   );
 }
 
+function formatClubYears(start, end, isCurrent) {
+  const startYear = start ? new Date(start).getFullYear() : null;
+  const endYear = end ? new Date(end).getFullYear() : null;
+
+  if (!startYear && !endYear) {
+    return isCurrent ? "Guncel kulup" : "";
+  }
+
+  if (!startYear) {
+    return isCurrent ? `${endYear} - Guncel` : String(endYear);
+  }
+
+  if (!endYear) {
+    return `${startYear} - Guncel`;
+  }
+
+  return startYear === endYear ? String(startYear) : `${startYear} - ${endYear}`;
+}
+
+function formatTransferFee(amount) {
+  const numeric = Number(amount);
+  if (!Number.isFinite(numeric) || numeric <= 0) return "";
+
+  if (numeric >= 1000000) {
+    return `€${(numeric / 1000000).toLocaleString("tr-TR", {
+      minimumFractionDigits: numeric >= 10000000 ? 0 : 1,
+      maximumFractionDigits: 1,
+    })}M`;
+  }
+
+  if (numeric >= 1000) {
+    return `€${(numeric / 1000).toLocaleString("tr-TR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })}B`;
+  }
+
+  return `€${numeric.toLocaleString("tr-TR")}`;
+}
+
 export default function PlayerProfileModal({ isOpen, player, onClose, apiBase }) {
   const [loading, setLoading] = useState(false);
   const [playerData, setPlayerData] = useState(null);
@@ -110,7 +150,7 @@ export default function PlayerProfileModal({ isOpen, player, onClose, apiBase })
 
     async function loadPlayer() {
       const resolvedInitialId = resolvePlayerId(player);
-      const cacheKey = String(resolvedInitialId || `${player.name}-${player.teamName || ""}`);
+      const cacheKey = String(resolvedInitialId || `${player.name}-${player.teamName || ""}`) + "-season-history-v1";
       if (playerProfileCache.has(cacheKey)) {
         setPlayerData(playerProfileCache.get(cacheKey));
         setError("");
@@ -189,15 +229,30 @@ export default function PlayerProfileModal({ isOpen, player, onClose, apiBase })
     stats: playerData?.stats || player?.stats || {},
   };
   const displayStats = profile.stats || {};
-  const statBlocks = [
-    { label: "Mac", value: displayStats?.appearances, accent: "blue" },
-    { label: "Dakika", value: displayStats?.minutes, accent: "blue" },
-    { label: "Gol", value: displayStats?.goals, accent: "amber" },
-    { label: "Asist", value: displayStats?.assists, accent: "amber" },
-    { label: "Pas", value: displayStats?.passes, accent: "blue" },
-    { label: "Pas %", value: displayStats?.passAccuracy != null ? `%${displayStats.passAccuracy}` : null, accent: "blue" },
-    { label: "Sari Kart", value: displayStats?.yellowCards, accent: "red" },
-    { label: "Kirmizi Kart", value: displayStats?.redCards, accent: "red" },
+  const formattedRating =
+    displayStats?.rating != null
+      ? Number(displayStats.rating).toLocaleString("tr-TR", {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 2,
+        })
+      : null;
+  const statRows = [
+    [
+      { label: "Mac", value: displayStats?.appearances, accent: "blue" },
+      { label: "Ilk 11", value: displayStats?.lineups, accent: "amber" },
+    ],
+    [
+      { label: "Gol", value: displayStats?.goals, accent: "amber" },
+      { label: "Asist", value: displayStats?.assists, accent: "amber" },
+      { label: "Dakika", value: displayStats?.minutes, accent: "blue" },
+      { label: "Rating", value: formattedRating, accent: "blue" },
+    ],
+    [
+      { label: "Pas", value: displayStats?.passes, accent: "blue" },
+      { label: "Pas %", value: displayStats?.passAccuracy != null ? `%${displayStats.passAccuracy}` : null, accent: "blue" },
+      { label: "Sari Kart", value: displayStats?.yellowCards, accent: "red" },
+      { label: "Kirmizi Kart", value: displayStats?.redCards, accent: "red" },
+    ],
   ];
   const summaryParts = [
     profile.teamName ? `${profile.teamName} formasiyla` : null,
@@ -207,6 +262,9 @@ export default function PlayerProfileModal({ isOpen, player, onClose, apiBase })
     displayStats?.assists != null ? `${displayStats.assists} asist` : null,
   ].filter(Boolean);
   const summaryText = summaryParts.length > 0 ? summaryParts.join(", ") + "." : "";
+  const careerClubs = Array.isArray(profile.careerClubs) ? profile.careerClubs : [];
+  const seasonHistory = Array.isArray(profile.seasonHistory) ? profile.seasonHistory : [];
+  const lastTransferFeeLabel = formatTransferFee(profile?.lastTransferFee?.amount);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-8">
@@ -249,6 +307,12 @@ export default function PlayerProfileModal({ isOpen, player, onClose, apiBase })
                     {profile.position ? <span className="rounded-2xl border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-blue-300">{profile.position}</span> : null}
                     {profile.detailedPosition ? <span className="rounded-2xl border border-slate-600 bg-slate-800/60 px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-200">{profile.detailedPosition}</span> : null}
                     {profile.seasonName ? <span className="rounded-2xl border border-slate-600 bg-slate-800/60 px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-200">{profile.seasonName}</span> : null}
+                    {lastTransferFeeLabel ? (
+                      <span className="inline-flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                        <BadgeEuro size={14} />
+                        {lastTransferFeeLabel}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="mt-5 grid gap-3 sm:grid-cols-1">
                     <InfoBadge image={profile.teamLogo} label="Takim" value={profile.teamName} />
@@ -268,10 +332,22 @@ export default function PlayerProfileModal({ isOpen, player, onClose, apiBase })
                 <Activity size={18} className="text-blue-400" />
                 <h4 className="text-sm font-black uppercase tracking-[0.22em] text-white">Performans Ozeti</h4>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {statBlocks.map((block) => (
-                  <StatCard key={block.label} label={block.label} value={block.value} accent={block.accent} />
-                ))}
+              <div className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {statRows[0].map((block) => (
+                    <StatCard key={block.label} label={block.label} value={block.value} accent={block.accent} />
+                  ))}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {statRows[1].map((block) => (
+                    <StatCard key={block.label} label={block.label} value={block.value} accent={block.accent} />
+                  ))}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {statRows[2].map((block) => (
+                    <StatCard key={block.label} label={block.label} value={block.value} accent={block.accent} />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -280,7 +356,7 @@ export default function PlayerProfileModal({ isOpen, player, onClose, apiBase })
             <div className="rounded-[28px] border border-slate-700/50 bg-slate-950/45 p-5">
               <div className="mb-4 flex items-center gap-3">
                 <Target size={18} className="text-amber-300" />
-                <h4 className="text-sm font-black uppercase tracking-[0.22em] text-white">Hizli Bilgiler</h4>
+                <h4 className="text-sm font-black uppercase tracking-[0.22em] text-white">Kisisel Bilgiler</h4>
               </div>
               <div className="space-y-3">
                 <DetailPill icon={CalendarDays} label="Dogum Tarihi" value={profile.dateOfBirth} tone="blue" />
@@ -291,6 +367,97 @@ export default function PlayerProfileModal({ isOpen, player, onClose, apiBase })
                 <DetailPill icon={Shield} label="Sezon" value={profile.seasonName} tone="blue" />
               </div>
             </div>
+
+            {careerClubs.length > 0 ? (
+              <div className="rounded-[28px] border border-slate-700/50 bg-slate-950/45 p-5">
+                <div className="mb-4 flex items-center gap-3">
+                  <Shield size={18} className="text-blue-300" />
+                  <h4 className="text-sm font-black uppercase tracking-[0.22em] text-white">Kariyer Kulupleri</h4>
+                </div>
+                <div className="space-y-3">
+                  {careerClubs.map((club) => (
+                    <div key={club.id || club.name} className="flex items-center gap-3 rounded-2xl border border-slate-700/70 bg-slate-900/70 px-4 py-3">
+                      {club.logo ? (
+                        <img src={club.logo} alt={club.name} className="h-10 w-10 rounded-full bg-white/90 object-contain p-1" />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 text-blue-300">
+                          <Shield size={15} />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-bold text-white">{club.name}</div>
+                        <div className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                          {formatClubYears(club.start, club.end, club.isCurrent) || "Kulup gecmisi"}
+                        </div>
+                      </div>
+                      {club.isCurrent ? (
+                        <span className="shrink-0 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                          Guncel
+                        </span>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {seasonHistory.length > 0 ? (
+              <div className="rounded-[28px] border border-slate-700/50 bg-slate-950/45 p-5">
+                <div className="mb-4 flex items-center gap-3">
+                  <Activity size={18} className="text-cyan-300" />
+                  <h4 className="text-sm font-black uppercase tracking-[0.22em] text-white">Gecmis Sezon Istatistikleri</h4>
+                </div>
+                <div className="space-y-4">
+                  {seasonHistory.map((entry) => (
+                    <div key={`${entry.seasonId}-${entry.teamId || entry.teamName}`} className="rounded-2xl border border-slate-700/70 bg-slate-900/70 p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
+                            {entry.seasonName || "Sezon"}
+                          </div>
+                          <div className="mt-2 flex min-w-0 items-center gap-3">
+                            {entry.teamLogo ? (
+                              <img src={entry.teamLogo} alt={entry.teamName} className="h-10 w-10 rounded-full bg-white/90 object-contain p-1" />
+                            ) : null}
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-bold text-white">{entry.teamName || "Takim"}</div>
+                              <div className="mt-1 truncate text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                                {entry.leagueName || "Lig bilgisi yok"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          <div className="rounded-xl border border-slate-700 bg-[#0f172a] px-3 py-2 text-center">
+                            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Mac</div>
+                            <div className="mt-1 text-sm font-black text-white">{entry.stats?.appearances ?? "--"}</div>
+                          </div>
+                          <div className="rounded-xl border border-slate-700 bg-[#0f172a] px-3 py-2 text-center">
+                            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Gol</div>
+                            <div className="mt-1 text-sm font-black text-amber-300">{entry.stats?.goals ?? "--"}</div>
+                          </div>
+                          <div className="rounded-xl border border-slate-700 bg-[#0f172a] px-3 py-2 text-center">
+                            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Asist</div>
+                            <div className="mt-1 text-sm font-black text-white">{entry.stats?.assists ?? "--"}</div>
+                          </div>
+                          <div className="rounded-xl border border-slate-700 bg-[#0f172a] px-3 py-2 text-center">
+                            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Rating</div>
+                            <div className="mt-1 text-sm font-black text-cyan-300">
+                              {entry.stats?.rating != null
+                                ? Number(entry.stats.rating).toLocaleString("tr-TR", {
+                                    minimumFractionDigits: 1,
+                                    maximumFractionDigits: 2,
+                                  })
+                                : "--"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <div className="rounded-[28px] border border-slate-700/50 bg-[linear-gradient(145deg,rgba(15,23,42,0.85),rgba(30,41,59,0.65))] p-5">
               {summaryText ? (

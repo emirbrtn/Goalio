@@ -81,13 +81,14 @@ function getNotificationMeta(type) {
 }
 
 export default function ProfilePage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
   const router = useRouter();
   const {
     notifications,
     unreadCount,
     refreshNotifications,
     removeNotification,
+    clearNotifications,
     markAllAsRead,
   } = useNotifications();
 
@@ -581,14 +582,24 @@ export default function ProfilePage() {
                 Son tahmin ve favori takım uyarıların burada listelenir.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={markAllAsRead}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-[#0f172a]/60 px-3 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-300 transition-all hover:border-blue-500/20 hover:bg-blue-500/10 hover:text-white"
-            >
-              <CheckCheck size={14} />
-              Tümünü Okundu Say
-            </button>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={markAllAsRead}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-[#0f172a]/60 px-3 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-300 transition-all hover:border-blue-500/20 hover:bg-blue-500/10 hover:text-white"
+              >
+                <CheckCheck size={14} />
+                Tümünü Okundu Say
+              </button>
+              <button
+                type="button"
+                onClick={clearNotifications}
+                className="inline-flex items-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-rose-200 transition-all hover:border-rose-400/30 hover:bg-rose-500/15 hover:text-white"
+              >
+                <Trash2 size={14} />
+                Tümünü Sil
+              </button>
+            </div>
           </div>
 
           {sortedNotifications.length > 0 ? (

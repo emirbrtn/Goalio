@@ -1,14 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Calendar, Radio, Timer } from "lucide-react";
+import { Calendar, Radio, Search, Timer } from "lucide-react";
 import MatchList from "../../components/MatchList";
 import { leagueList } from "@/lib/leagueConfig";
 import { filterActiveLiveMatches, sortLiveMatches, sortMatchesByStart } from "@/lib/matchPriority";
 
 function LiveScoresContent() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeLeague = searchParams.get("league") || "all";
@@ -17,6 +17,7 @@ function LiveScoresContent() {
   const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadMatches(activeLeague);
@@ -76,7 +77,26 @@ function LiveScoresContent() {
   }
 
   const filters = [{ key: "all", title: "Tüm Ligler" }, ...leagueList.map((league) => ({ key: league.key, title: league.title }))];
-  const hasAnyMatches = liveMatches.length > 0 || upcomingMatches.length > 0;
+  const filterMatches = (items) => {
+    const term = String(searchTerm || "").trim().toLocaleLowerCase("tr-TR");
+    if (!term) return items;
+
+    return items.filter((match) => {
+      const haystack = [
+        match?.homeTeam?.name,
+        match?.awayTeam?.name,
+        match?.league,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase("tr-TR");
+
+      return haystack.includes(term);
+    });
+  };
+  const filteredLiveMatches = useMemo(() => filterMatches(liveMatches), [liveMatches, searchTerm]);
+  const filteredUpcomingMatches = useMemo(() => filterMatches(upcomingMatches), [upcomingMatches, searchTerm]);
+  const hasAnyMatches = filteredLiveMatches.length > 0 || filteredUpcomingMatches.length > 0;
 
   return (
     <div className="min-h-screen bg-[#0f172a] p-6 md:p-10 text-slate-300">
@@ -122,6 +142,16 @@ function LiveScoresContent() {
               <div className="mt-3 text-lg font-black text-white">{filters.find((filter) => filter.key === activeLeague)?.title || "Tüm Ligler"}</div>
             </div>
           </div>
+
+          <div className="relative max-w-xl">
+            <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Takım veya lig adına göre maç ara..."
+              className="w-full rounded-2xl border border-slate-700/50 bg-[#1e293b] py-3 pl-12 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+            />
+          </div>
         </div>
 
         {message ? (
@@ -136,29 +166,31 @@ function LiveScoresContent() {
           </div>
         ) : hasAnyMatches ? (
           <div className="space-y-8">
-            {liveMatches.length > 0 ? (
+            {filteredLiveMatches.length > 0 ? (
               <section className="space-y-4">
                 <div className="flex items-center gap-4 border-l-4 border-red-600 pl-4 text-[12px] font-black uppercase italic tracking-[0.4em] text-red-500">
                   <Radio size={18} className="animate-pulse" /> Canlı Maçlar
                 </div>
                 <div className="max-h-[760px] overflow-y-auto pr-2 custom-scrollbar">
-                  <MatchList title="" matches={liveMatches} variant="live" />
+                  <MatchList title="" matches={filteredLiveMatches} variant="live" />
                 </div>
               </section>
             ) : null}
 
             <section className="space-y-4">
               <div className="flex items-center gap-4 border-l-4 border-blue-500 pl-4 text-[12px] font-black uppercase italic tracking-[0.4em] text-blue-400">
-                {liveMatches.length > 0 ? <Calendar size={18} className="text-blue-400" /> : <Timer size={18} className="text-blue-400" />}
-                {liveMatches.length > 0 ? "Sıradaki Maçlar" : "Yaklaşan Maçlar"}
+                {filteredLiveMatches.length > 0 ? <Calendar size={18} className="text-blue-400" /> : <Timer size={18} className="text-blue-400" />}
+                {filteredLiveMatches.length > 0 ? "Sıradaki Maçlar" : "Yaklaşan Maçlar"}
               </div>
-              <MatchList title="" matches={upcomingMatches} variant="scoreboard" showScheduleMeta />
+              <MatchList title="" matches={filteredUpcomingMatches} variant="scoreboard" showScheduleMeta />
             </section>
           </div>
         ) : (
           <div className="h-[320px] rounded-[35px] bg-[#1e293b]/40 border border-dashed border-slate-700/50 flex flex-col items-center justify-center gap-3 text-slate-500">
             <Radio size={36} />
-            <p className="text-sm font-black uppercase tracking-[0.3em]">Bu filtrede canlı veya yaklaşan maç yok</p>
+            <p className="text-sm font-black uppercase tracking-[0.3em]">
+              {searchTerm.trim() ? "Aramaya uygun maç bulunamadı" : "Bu filtrede canlı veya yaklaşan maç yok"}
+            </p>
           </div>
         )}
       </div>

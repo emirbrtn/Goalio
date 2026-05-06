@@ -78,7 +78,6 @@ export default function NotificationBell({ className = "" }) {
 
   function openDropdown() {
     setIsOpen(true);
-    markAllAsRead();
   }
 
   function closeDropdown() {

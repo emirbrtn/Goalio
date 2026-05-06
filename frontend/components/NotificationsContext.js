@@ -55,7 +55,7 @@ function getActualResult(match) {
 }
 
 export function NotificationsProvider({ children, disabled = false }) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
   const [notifications, setNotifications] = useState([]);
   const [prefs, setPrefs] = useState(DEFAULT_NOTIFICATION_PREFS);
   const [isReady, setIsReady] = useState(false);
@@ -112,6 +112,26 @@ export function NotificationsProvider({ children, disabled = false }) {
 
       if (response.ok) {
         setNotifications((current) => current.filter((item) => item.id !== notificationId && item._id !== notificationId));
+      }
+    } catch (error) {}
+  }
+
+  async function clearNotifications() {
+    const storedUser = readCurrentUser();
+    const token = typeof window !== "undefined" ? localStorage.getItem("goalio_token") : null;
+    const userId = String(storedUser?.id || storedUser?._id || "").trim();
+    if (!token || !userId) return;
+
+    try {
+      const response = await fetch(`${apiBase}/users/${userId}/notifications/history`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setNotifications([]);
       }
     } catch (error) {}
   }
@@ -308,6 +328,7 @@ export function NotificationsProvider({ children, disabled = false }) {
       prefs,
       refreshNotifications: syncNotifications,
       removeNotification,
+      clearNotifications,
       markAllAsRead,
     }),
     [notifications, unreadCount, prefs],

@@ -43,6 +43,11 @@ export default function HeaderActions({ inline = false, docked = false }) {
     };
   }, []);
 
+  useEffect(() => {
+    router.prefetch("/profile");
+    router.prefetch("/login");
+  }, [router]);
+
   const handleLogout = () => {
     const confirmed = window.confirm("Cikis yapmak istedigine emin misin?");
     if (!confirmed) return;

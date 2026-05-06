@@ -12,7 +12,7 @@ function resolvePlayerId(player) {
 }
 
 export default function MatchDetailPage() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
   const params = useParams();
   const router = useRouter();
 
@@ -256,11 +256,11 @@ export default function MatchDetailPage() {
             <Users className="text-red-500" /> {isProbableLineup ? "Probable XI" : "İlk 11 ve Değişiklikler"}
           </h3>
           {isProbableLineup ? <p className="mb-6 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-300/80">Match has not started yet. Displayed lineups are probable.</p> : null}
-          <div className="flex justify-between gap-4">
-            <TeamLineupColumn teamName={match.homeTeam?.name} starters={homeLineup} substitutions={homeSubstitutions} align="left" accent="home" isProbable={isProbableLineup} onPlayerSelect={(player) => openPlayerProfile({ ...player, teamName: match.homeTeam?.name })} />
-            <div className="w-[1px] bg-slate-800"></div>
-            <TeamLineupColumn teamName={match.awayTeam?.name} starters={awayLineup} substitutions={awaySubstitutions} align="right" accent="away" isProbable={isProbableLineup} onPlayerSelect={(player) => openPlayerProfile({ ...player, teamName: match.awayTeam?.name })} />
-          </div>
+        <div className="flex flex-col gap-6 sm:flex-row sm:justify-between sm:gap-4">
+          <TeamLineupColumn teamName={match.homeTeam?.name} starters={homeLineup} substitutions={homeSubstitutions} align="left" accent="home" isProbable={isProbableLineup} onPlayerSelect={(player) => openPlayerProfile({ ...player, teamName: match.homeTeam?.name })} />
+          <div className="h-[1px] bg-slate-800 sm:h-auto sm:w-[1px]"></div>
+          <TeamLineupColumn teamName={match.awayTeam?.name} starters={awayLineup} substitutions={awaySubstitutions} align="right" accent="away" isProbable={isProbableLineup} onPlayerSelect={(player) => openPlayerProfile({ ...player, teamName: match.awayTeam?.name })} />
+        </div>
         </div>
 
           <div className="bg-[#111827]/60 border border-slate-800 rounded-[35px] p-8 h-[720px] shadow-2xl flex flex-col">
@@ -269,8 +269,8 @@ export default function MatchDetailPage() {
           </h3>
           <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
             {orderedEvents.length > 0 ? orderedEvents.map((event, index) => (
-              <div key={index} className="flex items-center gap-4 bg-[#050509] p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-                <span className="font-black text-red-500 text-lg min-w-[52px]">{formatMinuteLabel(event)}</span>
+              <div key={index} className="flex flex-col gap-3 rounded-xl border border-slate-800 bg-[#050509] p-4 transition-colors hover:border-slate-700 sm:flex-row sm:items-center sm:gap-4">
+                <span className="font-black text-red-500 text-lg sm:min-w-[52px]">{formatMinuteLabel(event)}</span>
                 <div className="flex-1 min-w-0 text-sm text-slate-300 font-medium truncate">
                   {event.type?.name === "Substitution" ? (
                     <div className="flex items-center gap-2 truncate">
@@ -284,7 +284,7 @@ export default function MatchDetailPage() {
                     </button>
                   )}
                 </div>
-                <span className="text-[10px] font-black px-3 py-1.5 bg-slate-800 rounded-lg text-yellow-500 uppercase tracking-widest">{event.type?.name || "Olay"}</span>
+                <span className="self-start rounded-lg bg-slate-800 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-yellow-500 sm:self-auto">{event.type?.name || "Olay"}</span>
               </div>
             )) : <div className="text-sm text-slate-600 italic flex h-full items-center justify-center">Henüz önemli bir olay yok.</div>}
           </div>
@@ -389,12 +389,12 @@ function TeamLineupColumn({ teamName, starters, substitutions, align, accent, is
   const badgeClass = accent === "away" ? "bg-yellow-900/30 text-yellow-500" : "bg-red-950/50 text-red-400";
 
   return (
-    <div className="flex-1 space-y-2">
+    <div className="min-w-0 flex-1 space-y-2">
       <div className={`text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 truncate ${isRight ? "text-right" : ""}`}>{formatTeamName(teamName)}</div>
       {starters.length > 0 ? starters.map((player, index) => (
-        <div key={`starter-${index}`} className={`flex items-center gap-3 bg-[#050509] p-2.5 rounded-xl border border-slate-800 ${isRight ? "justify-end" : ""}`}>
+        <div key={`starter-${index}`} className={`flex min-w-0 items-center gap-3 rounded-xl border border-slate-800 bg-[#050509] p-2.5 ${isRight ? "justify-end" : ""}`}>
           {!isRight && <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold rounded-full ${badgeClass}`}>{player.jersey_number || "-"}</span>}
-          <button type="button" onClick={() => onPlayerSelect(player)} className="truncate text-left text-xs font-medium text-slate-300 transition-colors hover:text-blue-400">{player.player?.display_name || player.player_name || "Bilinmiyor"}</button>
+          <button type="button" onClick={() => onPlayerSelect(player)} className="min-w-0 truncate text-left text-xs font-medium text-slate-300 transition-colors hover:text-blue-400">{player.player?.display_name || player.player_name || "Bilinmiyor"}</button>
           {isRight && <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold rounded-full ${badgeClass}`}>{player.jersey_number || "-"}</span>}
         </div>
       )) : <div className={`text-xs text-slate-600 italic ${isRight ? "text-right" : ""}`}>{isProbable ? "Muhtemel 11 verisi yok" : "İlk 11 açıklanmadı"}</div>}
@@ -403,9 +403,9 @@ function TeamLineupColumn({ teamName, starters, substitutions, align, accent, is
         <div className={`text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 ${isRight ? "text-right" : ""}`}>Değişiklikler</div>
         {substitutions.length > 0 ? substitutions.map((event, index) => (
           <div key={`sub-${index}`} className={`bg-[#050509] p-3 rounded-xl border border-slate-800 space-y-1 ${isRight ? "text-right" : ""}`}>
-            <div className={`flex items-center justify-between gap-3 ${isRight ? "flex-row-reverse" : ""}`}>
+            <div className={`flex flex-wrap items-center justify-between gap-3 ${isRight ? "flex-row-reverse" : ""}`}>
               <span className="text-[10px] font-black text-yellow-400">{formatMinuteLabel(event)}</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Oyuna Giren</span>
+              <span className="min-w-0 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Oyuna Giren</span>
             </div>
             <button type="button" onClick={() => onPlayerSelect({ id: event.player_id, name: event.player_name })} className={`block w-full truncate text-xs font-semibold text-slate-200 transition-colors hover:text-blue-400 ${isRight ? "text-right" : "text-left"}`}>{event.player_name || "Bilinmiyor"}</button>
             <button type="button" onClick={() => onPlayerSelect({ id: event.related_player_id, name: event.related_player_name })} className={`block w-full truncate text-[11px] text-slate-500 transition-colors hover:text-blue-300 ${isRight ? "text-right" : "text-left"}`}>Çıkan: {event.related_player_name || "Bilinmiyor"}</button>

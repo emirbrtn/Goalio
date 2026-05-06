@@ -1,13 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { History, Trophy } from "lucide-react";
+import { History, Search, Trophy } from "lucide-react";
 import MatchList from "../../components/MatchList";
 import { leagueList } from "@/lib/leagueConfig";
 
 function HistoryContent() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeLeague = searchParams.get("league") || "all";
@@ -15,12 +15,13 @@ function HistoryContent() {
   const [matches, setMatches] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadHistory(activeLeague);
   }, [activeLeague]);
 
-  async function loadHistory(leagueKey) {   
+  async function loadHistory(leagueKey) {
     setLoading(true);
     setMessage("");
 
@@ -53,6 +54,23 @@ function HistoryContent() {
   }
 
   const filters = [{ key: "all", title: "Tüm Ligler" }, ...leagueList.map((league) => ({ key: league.key, title: league.title }))];
+  const filteredMatches = useMemo(() => {
+    const term = String(searchTerm || "").trim().toLocaleLowerCase("tr-TR");
+    if (!term) return matches;
+
+    return matches.filter((match) => {
+      const haystack = [
+        match?.homeTeam?.name,
+        match?.awayTeam?.name,
+        match?.league,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase("tr-TR");
+
+      return haystack.includes(term);
+    });
+  }, [matches, searchTerm]);
 
   return (
     <div className="min-h-screen bg-[#0f172a] p-6 md:p-10 text-slate-300">
@@ -83,6 +101,17 @@ function HistoryContent() {
               </button>
             ))}
           </div>
+
+          <div className="relative max-w-xl">
+            <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Takım veya lig adına göre maç ara..."
+              className="w-full rounded-2xl border border-slate-700/50 bg-[#1e293b] py-3 pl-12 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+
         </div>
 
         {message && (
@@ -95,12 +124,14 @@ function HistoryContent() {
           <div className="h-[300px] rounded-[35px] bg-[#1e293b]/40 border border-slate-700/50 flex items-center justify-center text-slate-400 font-bold animate-pulse">
             Maçlar yükleniyor...
           </div>
-        ) : matches.length > 0 ? (
-          <MatchList title="Tamamlanan Maçlar" matches={matches} variant="history" />
+        ) : filteredMatches.length > 0 ? (
+          <MatchList title="Tamamlanan Maçlar" matches={filteredMatches} variant="history" />
         ) : (
           <div className="h-[300px] rounded-[35px] bg-[#1e293b]/40 border border-dashed border-slate-700/50 flex flex-col items-center justify-center gap-3 text-slate-500">
             <Trophy size={36} />
-            <p className="text-sm font-black uppercase tracking-[0.3em]">Bu filtrede maç bulunamadı</p>
+            <p className="text-sm font-black uppercase tracking-[0.3em]">
+              {searchTerm.trim() ? "Aramaya uygun maç bulunamadı" : "Bu filtrede maç bulunamadı"}
+            </p>
           </div>
         )}
       </div>

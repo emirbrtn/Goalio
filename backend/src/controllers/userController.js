@@ -111,7 +111,8 @@ async function resolveUser(identifier) {
 }
 
 async function fetchFixtureForPrediction(matchId) {
-  const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
+  const token = String(process.env.SPORTSMONKS_API_TOKEN || "").trim();
+
   if (!token) {
     const error = new Error("SPORTSMONKS_API_TOKEN missing");
     error.status = 503;
@@ -122,20 +123,20 @@ async function fetchFixtureForPrediction(matchId) {
     `https://api.sportmonks.com/v3/football/fixtures/${matchId}?api_token=${token}&include=state`,
   );
 
-  if (response.status === 404) {
+  if (!response.ok) {
+    const error = new Error(`Fixture lookup failed: ${response.status}`);
+    error.status = response.status === 404 ? 404 : 503;
+    throw error;
+  }
+
+  const fixture = (await response.json()).data;
+  if (!fixture?.id) {
     const error = new Error("Fixture not found");
     error.status = 404;
     throw error;
   }
 
-  if (!response.ok) {
-    const error = new Error(`Fixture fetch failed: ${response.status}`);
-    error.status = 503;
-    throw error;
-  }
-
-  const json = await response.json();
-  return json.data || null;
+  return fixture;
 }
 
 exports.register = async (req, res) => {
@@ -270,7 +271,10 @@ exports.updateNotificationPrefs = async (req, res) => {
 exports.listUserNotifications = async (req, res) => {
   if (!requireSameUser(req, res)) return;
 
-  const items = await UserNotification.find({ userId: String(req.params.id) })
+  const items = await UserNotification.find({
+    userId: String(req.params.id),
+    dismissed: { $ne: true },
+  })
     .sort({ createdAt: -1, _id: -1 })
     .limit(80)
     .lean();
@@ -299,6 +303,7 @@ exports.syncUserNotifications = async (req, res) => {
           message: String(item?.message || "").trim(),
           matchId: String(item?.matchId || "").trim(),
           read: false,
+          dismissed: false,
           createdAt: item?.createdAt ? new Date(item.createdAt) : new Date(),
         },
       },
@@ -306,7 +311,10 @@ exports.syncUserNotifications = async (req, res) => {
     );
   }
 
-  const items = await UserNotification.find({ userId })
+  const items = await UserNotification.find({
+    userId,
+    dismissed: { $ne: true },
+  })
     .sort({ createdAt: -1, _id: -1 })
     .limit(80)
     .lean();
@@ -318,11 +326,14 @@ exports.markAllNotificationsRead = async (req, res) => {
   if (!requireSameUser(req, res)) return;
 
   await UserNotification.updateMany(
-    { userId: String(req.params.id), read: false },
+    { userId: String(req.params.id), read: false, dismissed: { $ne: true } },
     { $set: { read: true } },
   );
 
-  const items = await UserNotification.find({ userId: String(req.params.id) })
+  const items = await UserNotification.find({
+    userId: String(req.params.id),
+    dismissed: { $ne: true },
+  })
     .sort({ createdAt: -1, _id: -1 })
     .limit(80)
     .lean();
@@ -333,10 +344,28 @@ exports.markAllNotificationsRead = async (req, res) => {
 exports.deleteUserNotification = async (req, res) => {
   if (!requireSameUser(req, res)) return;
 
-  await UserNotification.deleteOne({
+  await UserNotification.updateOne({
     userId: String(req.params.id),
     _id: String(req.params.notificationId || ""),
+  }, {
+    $set: { dismissed: true, read: true },
   });
+
+  return res.status(204).send();
+};
+
+exports.deleteAllUserNotifications = async (req, res) => {
+  if (!requireSameUser(req, res)) return;
+
+  await UserNotification.updateMany(
+    {
+      userId: String(req.params.id),
+      dismissed: { $ne: true },
+    },
+    {
+      $set: { dismissed: true, read: true },
+    },
+  );
 
   return res.status(204).send();
 };
@@ -576,16 +605,16 @@ exports.saveUserPrediction = async (req, res) => {
       _id: String(prediction.legacyId || prediction._id),
     });
   } catch (error) {
-    const status = error.status || 500;
-    return res.status(status).json({
-      message:
-        status === 404
-          ? "Mac bulunamadi"
-          : status === 503
-            ? "Mac durumu su anda dogrulanamiyor. Lutfen biraz sonra tekrar deneyin."
-            : "Tahmin kaydedilemedi",
-    });
-  }
+      const status = error.status || 500;
+      return res.status(status).json({
+        message:
+          status === 404
+            ? "Mac bulunamadi"
+            : status === 503
+              ? "Mac durumu su anda dogrulanamiyor. Lutfen biraz sonra tekrar deneyin."
+              : "Tahmin kaydedilemedi",
+      });
+    }
 };
 
 exports.deleteUserPrediction = async (req, res) => {

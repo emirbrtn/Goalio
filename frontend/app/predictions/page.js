@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BrainCircuit,
   Zap,
+  Search,
   Star,
   Trophy,
   Loader2,
@@ -16,6 +17,7 @@ import {
   formatMatchDateTime,
   formatTeamName,
   getLeagueLogo,
+  parseMatchDate,
 } from "@/lib/text";
 
 function getStatusLabel(status) {
@@ -48,14 +50,56 @@ function getPrimaryPick(probabilities) {
   return entries.sort((a, b) => b.value - a.value)[0] || null;
 }
 
+function getLatestEventTotalMinute(match) {
+  const events = Array.isArray(match?.sportsmonkData?.events) ? match.sportsmonkData.events : [];
+  return events.reduce((max, event) => {
+    const minute = Number(event?.minute || 0);
+    const extraMinute = Number(event?.extra_minute || 0);
+    return Math.max(max, minute + extraMinute);
+  }, 0);
+}
+
+function getEstimatedFinishedAt(match) {
+  if (match?.status !== "finished") return null;
+
+  const startedAt = parseMatchDate(match?.startTime || match?.date || match?.sportsmonkData?.starting_at);
+  if (!startedAt) return null;
+
+  const regulationLength = Number(match?.sportsmonkData?.length || 90) || 90;
+  const latestEventMinute = getLatestEventTotalMinute(match);
+  const effectiveMatchMinutes = Math.max(regulationLength, latestEventMinute);
+  const halftimeBreakMinutes = regulationLength >= 90 ? 15 : 0;
+  const extraTimeBreakMinutes = effectiveMatchMinutes > 105 ? 5 : 0;
+
+  return new Date(
+    startedAt.getTime() + (effectiveMatchMinutes + halftimeBreakMinutes + extraTimeBreakMinutes) * 60000,
+  );
+}
+
+function isVisiblePredictionMatch(match) {
+  if (!match) return false;
+  if (match.status !== "finished") return true;
+
+  const estimatedFinishedAt = getEstimatedFinishedAt(match);
+  if (!estimatedFinishedAt) return false;
+
+  return Date.now() - estimatedFinishedAt.getTime() <= 60 * 60 * 1000;
+}
+
 export default function PredictionsPage() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
   const [matchList, setMatchList] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const selectedMatchRef = useRef(null);
+
+  useEffect(() => {
+    selectedMatchRef.current = selectedMatch;
+  }, [selectedMatch]);
 
   useEffect(() => {
     loadMatches();
@@ -86,8 +130,8 @@ export default function PredictionsPage() {
     try {
       const res = await fetch(`${api}/matches?limit=50`, { cache: "no-store" });
       const data = await res.json();
-      const safeData = Array.isArray(data) ? data : [];
-      const currentSelectedId = selectedMatch?._id || null;
+      const safeData = (Array.isArray(data) ? data : []).filter(isVisiblePredictionMatch);
+      const currentSelectedId = selectedMatchRef.current?._id || null;
       const matchedSelection = currentSelectedId
         ? safeData.find((match) => match._id === currentSelectedId)
         : null;
@@ -97,8 +141,11 @@ export default function PredictionsPage() {
       setMatchList(safeData);
       setSelectedMatch(nextSelection);
 
-      if (!matchedSelection && currentSelectedId) {
+      if (String(nextSelection?._id || "") !== String(currentSelectedId || "")) {
         setPrediction(null);
+        if (silent) {
+          setMessage("");
+        }
       }
     } catch (error) {
       if (!silent) {
@@ -156,6 +203,23 @@ export default function PredictionsPage() {
 
   const canPredict = selectedMatch?.status === "scheduled";
   const factors = prediction?.analysis?.factors || [];
+  const filteredMatchList = useMemo(() => {
+    const term = String(searchTerm || "").trim().toLocaleLowerCase("tr-TR");
+    if (!term) return matchList;
+
+    return matchList.filter((match) => {
+      const haystack = [
+        match?.homeTeam?.name,
+        match?.awayTeam?.name,
+        match?.league,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase("tr-TR");
+
+      return haystack.includes(term);
+    });
+  }, [matchList, searchTerm]);
   const primaryPick = useMemo(
     () => getPrimaryPick(prediction?.probabilities),
     [prediction],
@@ -181,17 +245,17 @@ export default function PredictionsPage() {
       <div className="pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-yellow-500/10 blur-[120px]" />
 
       <div className="relative z-10 mx-auto max-w-7xl space-y-10">
-        <div className="flex items-center justify-between border-b border-slate-800/60 pb-8">
+        <div className="flex flex-col gap-6 border-b border-slate-800/60 pb-8 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex items-center gap-3">
               <div className="rounded-2xl border border-red-500/20 bg-red-950/50 p-3">
                 <BrainCircuit className="text-red-500" size={28} />
               </div>
-              <h2 className="bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 bg-clip-text text-4xl font-black italic tracking-tighter text-transparent">
+              <h2 className="bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 bg-clip-text text-3xl font-black italic tracking-tighter text-transparent sm:text-4xl">
                 AI MATCH PREDICTION CENTER
               </h2>
             </div>
-            <p className="mt-2 ml-16 max-w-2xl text-slate-400">
+            <p className="mt-2 max-w-2xl text-slate-400 sm:ml-16">
               Goalio AI, macin form durumu, puan tablosu, ic saha deplasman etkisi ve son performans
               verilerini analiz ederek aciklanabilir tahmin uretir.
             </p>
@@ -213,13 +277,23 @@ export default function PredictionsPage() {
               Mac Listesi
             </h4>
 
-            {matchList.length === 0 ? (
+            <div className="relative mb-4">
+              <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Takım veya lig adına göre maç ara..."
+                className="w-full rounded-2xl border border-slate-700/50 bg-[#0f172a] py-3 pl-12 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-yellow-500 focus:outline-none"
+              />
+            </div>
+
+            {filteredMatchList.length === 0 ? (
               <div className="flex flex-1 items-center justify-center text-center italic text-slate-600">
-                Analiz icin uygun mac bulunamadi.
+                {searchTerm.trim() ? "Aramaya uygun maç bulunamadı." : "Analiz icin uygun mac bulunamadi."}
               </div>
             ) : (
               <div className="custom-scrollbar flex-1 space-y-3 overflow-y-auto pr-2">
-                {matchList.map((match) => {
+                {filteredMatchList.map((match) => {
                   const isSelected = selectedMatch?._id === match._id;
                   const leagueLogo = getLeagueLogo(match.league);
 
@@ -238,12 +312,12 @@ export default function PredictionsPage() {
                           : "border-slate-700 bg-[#0f172a] text-slate-300 hover:border-yellow-500/40 hover:bg-slate-800"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-3 text-xs font-bold">
-                        <span className="w-24 truncate">{formatTeamName(match.homeTeam?.name)}</span>
-                        <span className={`text-xl font-black ${isSelected ? "text-white" : "text-yellow-400"}`}>
-                          {match.score?.home ?? "-"} : {match.score?.away ?? "-"}
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-xs font-bold">
+                        <span className="min-w-0 break-words pr-1">{formatTeamName(match.homeTeam?.name)}</span>
+                        <span className={`shrink-0 rounded-xl px-2 py-1 text-base font-black sm:text-xl ${isSelected ? "bg-black/15 text-white" : "text-yellow-400"}`}>
+                          {match.score?.home ?? "-"}:{match.score?.away ?? "-"}
                         </span>
-                        <span className="w-24 truncate text-right">{formatTeamName(match.awayTeam?.name)}</span>
+                        <span className="min-w-0 break-words pl-1 text-right">{formatTeamName(match.awayTeam?.name)}</span>
                       </div>
 
                       <div className="mt-1 flex items-center justify-between gap-3">
@@ -283,20 +357,20 @@ export default function PredictionsPage() {
             <div className="flex flex-1 flex-col rounded-[45px] border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-950 p-10 shadow-2xl shadow-red-950/10">
               {selectedMatch ? (
                 <>
-                  <div className="mb-10 flex items-center justify-center gap-10">
+                    <div className="mb-10 flex flex-col items-center gap-8 sm:gap-10 lg:flex-row lg:items-center lg:justify-center">
                     <div className="flex flex-1 flex-col items-center gap-4 text-center">
                       <img
                         src={selectedMatch.homeTeam?.logo}
                         alt={selectedMatch.homeTeam?.name || "Ev sahibi logo"}
-                        className="h-24 w-24 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                        className="h-20 w-20 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] sm:h-24 sm:w-24"
                       />
-                      <h3 className="text-center text-2xl font-black italic tracking-tighter text-white">
+                      <h3 className="text-center text-xl font-black italic tracking-tighter text-white sm:text-2xl">
                         {formatTeamName(selectedMatch.homeTeam?.name)}
                       </h3>
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
-                      <div className="tabular-nums text-6xl font-black italic tracking-tighter text-white">
+                      <div className="tabular-nums text-4xl font-black italic tracking-tighter text-white sm:text-6xl">
                         {selectedMatch.score?.home ?? "-"} : {selectedMatch.score?.away ?? "-"}
                       </div>
                       <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
@@ -323,9 +397,9 @@ export default function PredictionsPage() {
                       <img
                         src={selectedMatch.awayTeam?.logo}
                         alt={selectedMatch.awayTeam?.name || "Deplasman logo"}
-                        className="h-24 w-24 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                        className="h-20 w-20 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] sm:h-24 sm:w-24"
                       />
-                      <h3 className="text-center text-2xl font-black italic tracking-tighter text-white">
+                      <h3 className="text-center text-xl font-black italic tracking-tighter text-white sm:text-2xl">
                         {formatTeamName(selectedMatch.awayTeam?.name)}
                       </h3>
                     </div>

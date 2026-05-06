@@ -9,6 +9,7 @@ const UserNotificationSchema = new mongoose.Schema(
     message: { type: String, default: "", trim: true },
     matchId: { type: String, default: "", trim: true },
     read: { type: Boolean, default: false },
+    dismissed: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true },
