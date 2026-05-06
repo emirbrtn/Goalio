@@ -12,14 +12,19 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || "*" }));
 app.use(express.json());
 
+function mountRoute(path, router) {
+  app.use(path, router);
+  app.use(`/api${path}`, router);
+}
+
 app.get("/", (req, res) => {
   res.json({ message: "Goalio API aktif" });
 });
 
-app.use("/api/users", userRoutes);
-app.use("/api/matches", matchRoutes);
-app.use("/api/teams", teamRoutes);
-app.use("/api/players", playerRoutes);
-app.use("/api/predictions", predictionRoutes);
+mountRoute("/users", userRoutes);
+mountRoute("/matches", matchRoutes);
+mountRoute("/teams", teamRoutes);
+mountRoute("/players", playerRoutes);
+mountRoute("/predictions", predictionRoutes);
 
 module.exports = app;
