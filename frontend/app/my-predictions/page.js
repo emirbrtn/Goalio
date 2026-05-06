@@ -12,6 +12,7 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api";
 import { leagueList } from "@/lib/leagueConfig";
 import { formatLeagueName, formatMatchDateTime, formatTeamName } from "@/lib/text";
 
@@ -308,7 +309,7 @@ function PredictionSection({ title, subtitle, items, tone, emptyText, router, on
 }
 
 export default function MyPredictions() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = getApiBaseUrl();
   const [predictions, setPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();

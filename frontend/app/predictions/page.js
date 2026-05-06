@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api";
 import {
   formatLeagueName,
   formatLiveMinute,
@@ -87,7 +88,7 @@ function isVisiblePredictionMatch(match) {
 }
 
 export default function PredictionsPage() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = getApiBaseUrl();
   const [matchList, setMatchList] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [prediction, setPrediction] = useState(null);

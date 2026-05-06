@@ -2,9 +2,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api";
 
 export default function LoginPage() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = getApiBaseUrl();
   const router = useRouter();
 
   const [form, setForm] = useState({ username: "", email: "", password: "", mode: "login" });

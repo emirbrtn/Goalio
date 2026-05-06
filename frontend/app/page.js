@@ -21,13 +21,14 @@ import MatchList from "../components/MatchList";
 import HeaderActions from "../components/HeaderActions";
 import PlayerProfileModal from "../components/PlayerProfileModal";
 import StatsCard from "../components/StatsCard";
+import { getApiBaseUrl } from "@/lib/api";
 import { filterActiveLiveMatches, selectHeroMatch, sortLiveMatches } from "@/lib/matchPriority";
 import { formatLeagueName, formatLiveMinute, formatMatchDateTime, formatTeamName, getLeagueLogo, parseMatchDate } from "@/lib/text";
 
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const apiBase = getApiBaseUrl();
   const autoSearchParam = searchParams.get("search");
   const autoTeamId = searchParams.get("teamId");
 

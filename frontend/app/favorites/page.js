@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { Star, Shield, User, ArrowLeft, HeartOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { getApiBaseUrl } from "@/lib/api";
 import PlayerProfileModal from "../../components/PlayerProfileModal";
 
 export default function FavoritesPage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const apiBase = getApiBaseUrl();
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [favTeams, setFavTeams] = useState([]);

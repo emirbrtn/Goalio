@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import UserAvatar from "@/components/UserAvatar";
 import { useNotifications } from "@/components/NotificationsContext";
+import { getApiBaseUrl } from "@/lib/api";
 import { avatarPresets, defaultAvatarId } from "@/lib/avatarPresets";
 
 const DEFAULT_NOTIFICATION_PREFS = {
@@ -81,7 +82,7 @@ function getNotificationMeta(type) {
 }
 
 export default function ProfilePage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const apiBase = getApiBaseUrl();
   const router = useRouter();
   const {
     notifications,

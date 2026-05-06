@@ -4,11 +4,12 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Calendar, Radio, Search, Timer } from "lucide-react";
 import MatchList from "../../components/MatchList";
+import { getApiBaseUrl } from "@/lib/api";
 import { leagueList } from "@/lib/leagueConfig";
 import { filterActiveLiveMatches, sortLiveMatches, sortMatchesByStart } from "@/lib/matchPriority";
 
 function LiveScoresContent() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = getApiBaseUrl();
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeLeague = searchParams.get("league") || "all";

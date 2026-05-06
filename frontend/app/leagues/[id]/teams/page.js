@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, Search, Activity } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api";
 import { leagueConfig } from "@/lib/leagueConfig";
 import { formatTeamName } from "@/lib/text";
 
@@ -10,7 +11,7 @@ export default function LeagueTeamsPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const router = useRouter();
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const apiBase = getApiBaseUrl();
 
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);

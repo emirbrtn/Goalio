@@ -5,6 +5,7 @@ import { ArrowLeft, BarChart3, BrainCircuit, Loader2, Trophy, Users, Clock, Targ
 import MatchFormationPitch from "@/components/MatchFormationPitch";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import StatsCard from "@/components/StatsCard";
+import { getApiBaseUrl } from "@/lib/api";
 import { formatLiveMinute, formatMatchDateTime, formatMinuteLabel, formatTeamName, sortMatchEvents } from "@/lib/text";
 
 function resolvePlayerId(player) {
@@ -12,7 +13,7 @@ function resolvePlayerId(player) {
 }
 
 export default function MatchDetailPage() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = getApiBaseUrl();
   const params = useParams();
   const router = useRouter();
 

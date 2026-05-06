@@ -4,10 +4,11 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { History, Search, Trophy } from "lucide-react";
 import MatchList from "../../components/MatchList";
+import { getApiBaseUrl } from "@/lib/api";
 import { leagueList } from "@/lib/leagueConfig";
 
 function HistoryContent() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const api = getApiBaseUrl();
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeLeague = searchParams.get("league") || "all";
