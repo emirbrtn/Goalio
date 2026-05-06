@@ -27,6 +27,7 @@ const allowedAvatarIds = new Set([
 ]);
 
 const defaultAvatarId = "captain";
+const allowedPredictionResults = new Set(["homeWin", "draw", "awayWin"]);
 
 const toPublicUserId = (user) => String(user?.legacyId || user?._id || "");
 
@@ -107,6 +108,34 @@ async function resolveUser(identifier) {
   }
 
   return null;
+}
+
+async function fetchFixtureForPrediction(matchId) {
+  const token = (process.env.SPORTSMONKS_API_TOKEN || "").trim();
+  if (!token) {
+    const error = new Error("SPORTSMONKS_API_TOKEN missing");
+    error.status = 503;
+    throw error;
+  }
+
+  const response = await fetch(
+    `https://api.sportmonks.com/v3/football/fixtures/${matchId}?api_token=${token}&include=state`,
+  );
+
+  if (response.status === 404) {
+    const error = new Error("Fixture not found");
+    error.status = 404;
+    throw error;
+  }
+
+  if (!response.ok) {
+    const error = new Error(`Fixture fetch failed: ${response.status}`);
+    error.status = 503;
+    throw error;
+  }
+
+  const json = await response.json();
+  return json.data || null;
 }
 
 exports.register = async (req, res) => {
@@ -499,17 +528,14 @@ exports.listUserPredictions = async (req, res) => {
 exports.saveUserPrediction = async (req, res) => {
   if (!requireSameUser(req, res)) return;
 
-  const matchId = String(req.body.matchId || "").trim();
-  if (!matchId) {
-    return res.status(400).json({ message: "Mac kimligi gerekli" });
-  }
+  try {
+    const matchId = String(req.body.matchId || "").trim();
+    const predictedResult = String(req.body.predictedResult || "").trim();
 
-  const existingPrediction = await UserPrediction.findOne({
-    userId: String(req.params.id),
-    matchId,
-  }).lean();
+    if (!matchId) {
+      return res.status(400).json({ message: "Mac kimligi gerekli" });
+    }
 
-<<<<<<< HEAD
     if (!/^\d+$/.test(matchId)) {
       return res.status(400).json({ message: "Gecersiz mac kimligi" });
     }
@@ -558,28 +584,8 @@ exports.saveUserPrediction = async (req, res) => {
           : status === 503
             ? "Mac durumu su anda dogrulanamiyor. Lutfen biraz sonra tekrar deneyin."
             : "Tahmin kaydedilemedi",
-=======
-  if (existingPrediction) {
-    return res.status(200).json({
-      ...existingPrediction,
-      id: String(existingPrediction.legacyId || existingPrediction._id),
-      _id: String(existingPrediction.legacyId || existingPrediction._id),
->>>>>>> 4b5d01481e6cc1f2dfd2c90ec5cd2cb1512a2634
     });
   }
-
-  const prediction = await UserPrediction.create({
-    userId: String(req.params.id),
-    matchId,
-    predictedResult: req.body.predictedResult,
-    createdOn: new Date().toISOString(),
-  });
-
-  return res.status(201).json({
-    ...prediction.toObject(),
-    id: String(prediction.legacyId || prediction._id),
-    _id: String(prediction.legacyId || prediction._id),
-  });
 };
 
 exports.deleteUserPrediction = async (req, res) => {
