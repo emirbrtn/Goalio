@@ -27,7 +27,7 @@ import { formatLeagueName, formatLiveMinute, formatMatchDateTime, formatTeamName
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
   const autoSearchParam = searchParams.get("search");
   const autoTeamId = searchParams.get("teamId");
 

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
   const router = useRouter();
 
   const [form, setForm] = useState({ username: "", email: "", password: "", mode: "login" });

@@ -7,7 +7,7 @@ import MatchList from "../../components/MatchList";
 import { leagueList } from "@/lib/leagueConfig";
 
 function HistoryContent() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeLeague = searchParams.get("league") || "all";

@@ -308,7 +308,7 @@ function PredictionSection({ title, subtitle, items, tone, emptyText, router, on
 }
 
 export default function MyPredictions() {
-  const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const api = process.env.NEXT_PUBLIC_API_URL || "/api";
   const [predictions, setPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
