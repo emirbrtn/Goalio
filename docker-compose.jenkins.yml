@@ -4,6 +4,7 @@ services:
       context: ./jenkins
       dockerfile: Dockerfile
     container_name: goalio-jenkins
+    user: "0:0"
     restart: unless-stopped
     ports:
       - "8080:8080"
