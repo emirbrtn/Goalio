@@ -1,7 +1,6 @@
 services:
   mongodb:
     image: mongo:7.0
-    container_name: goalio-mongodb
     restart: unless-stopped
     ports:
       - "27017:27017"
@@ -18,7 +17,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: goalio-backend
     restart: unless-stopped
     env_file:
       - ./backend/.env
@@ -38,7 +36,6 @@ services:
       args:
         NEXT_PUBLIC_API_URL: /api
         BACKEND_INTERNAL_URL: http://backend:5000
-    container_name: goalio-frontend
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: /api
