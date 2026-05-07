@@ -8,6 +8,9 @@ pipeline {
   environment {
     COMPOSE_PROJECT_NAME = 'goalio-ci'
     COMPOSE_FILES = '-f docker-compose.yml -f docker-compose.ci.yml'
+    MONGODB_PORT = '37017'
+    BACKEND_PORT = '35000'
+    FRONTEND_PORT = '33000'
   }
 
   stages {
