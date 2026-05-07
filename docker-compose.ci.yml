@@ -1,0 +1,9 @@
+services:
+  mongodb:
+    ports: []
+
+  backend:
+    ports: []
+
+  frontend:
+    ports: []
