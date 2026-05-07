@@ -11,6 +11,7 @@ pipeline {
     MONGODB_PORT = '37017'
     BACKEND_PORT = '35000'
     FRONTEND_PORT = '33000'
+    KEEP_CI_CONTAINERS = 'true'
   }
 
   stages {
@@ -53,7 +54,13 @@ pipeline {
       sh 'docker compose ${COMPOSE_FILES} ps || true'
       sh 'docker compose ${COMPOSE_FILES} logs --no-color > ci/compose.log || true'
       archiveArtifacts artifacts: 'ci/compose.log', onlyIfSuccessful: false
-      sh 'docker compose ${COMPOSE_FILES} down -v --remove-orphans || true'
+      script {
+        if (env.KEEP_CI_CONTAINERS == 'true') {
+          echo 'Keeping CI containers running for Docker Desktop verification.'
+        } else {
+          sh 'docker compose ${COMPOSE_FILES} down -v --remove-orphans || true'
+        }
+      }
     }
   }
 }
