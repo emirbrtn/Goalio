@@ -21,6 +21,7 @@ pipeline {
   stages {
     stage('Checkout SCM') {
       steps {
+        deleteDir()
         git branch: 'main', url: 'https://github.com/emirbrtn/Goalio.git'
       }
     }
