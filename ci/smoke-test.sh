@@ -5,6 +5,7 @@ PROJECT_NAME="${COMPOSE_PROJECT_NAME:-goalio-ci}"
 NETWORK_NAME="${PROJECT_NAME}_default"
 MAX_ATTEMPTS="${SMOKE_MAX_ATTEMPTS:-12}"
 SLEEP_SECONDS="${SMOKE_SLEEP_SECONDS:-5}"
+COMPOSE_FILES="${COMPOSE_FILES:--f docker-compose.yml -f docker-compose.ci.yml}"
 
 retry_check() {
   description="$1"
@@ -27,17 +28,30 @@ retry_check() {
   done
 }
 
+has_service() {
+  service_name="$1"
+  docker compose ${COMPOSE_FILES} config --services | grep -qx "$service_name"
+}
+
 retry_check \
   "Checking backend health endpoint" \
   "docker run --rm --network \"${NETWORK_NAME}\" alpine:3.20 sh -c \"wget -qO- http://backend:5000/ | grep 'Goalio API aktif'\""
 
-echo "Checking redis availability..."
-docker run --rm --network "${NETWORK_NAME}" redis:7.2-alpine \
-  redis-cli -h redis ping | grep PONG
+if has_service redis; then
+  echo "Checking redis availability..."
+  docker run --rm --network "${NETWORK_NAME}" redis:7.2-alpine \
+    redis-cli -h redis ping | grep PONG
+else
+  echo "Skipping redis availability check: redis service is not defined."
+fi
 
-echo "Checking rabbitmq availability..."
-docker run --rm --network "${NETWORK_NAME}" rabbitmq:3-management \
-  rabbitmq-diagnostics -n rabbit@rabbitmq -q ping
+if has_service rabbitmq; then
+  echo "Checking rabbitmq availability..."
+  docker run --rm --network "${NETWORK_NAME}" rabbitmq:3-management \
+    rabbitmq-diagnostics -n rabbit@rabbitmq -q ping
+else
+  echo "Skipping rabbitmq availability check: rabbitmq service is not defined."
+fi
 
 retry_check \
   "Checking frontend home page" \
