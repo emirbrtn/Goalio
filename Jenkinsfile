@@ -3,12 +3,16 @@ pipeline {
 
   options {
     disableConcurrentBuilds()
+    skipDefaultCheckout(true)
   }
 
   environment {
     COMPOSE_PROJECT_NAME = 'goalio-ci'
     COMPOSE_FILES = '-f docker-compose.yml -f docker-compose.ci.yml'
     MONGODB_PORT = '37017'
+    REDIS_PORT = '36379'
+    RABBITMQ_PORT = '35672'
+    RABBITMQ_MANAGEMENT_PORT = '35673'
     BACKEND_PORT = '35000'
     FRONTEND_PORT = '33000'
     KEEP_CI_CONTAINERS = 'true'
@@ -17,7 +21,7 @@ pipeline {
   stages {
     stage('Checkout SCM') {
       steps {
-        checkout scm
+        git branch: 'main', url: 'https://github.com/emirbrtn/Goalio.git'
       }
     }
 
