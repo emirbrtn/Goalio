@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import NotificationBell from "@/components/NotificationBell";
 import UserAvatar from "@/components/UserAvatar";
+import { performLogout } from "@/lib/logout";
 
 export default function HeaderActions({ inline = false, docked = false }) {
   const router = useRouter();
@@ -48,13 +49,11 @@ export default function HeaderActions({ inline = false, docked = false }) {
     router.prefetch("/login");
   }, [router]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const confirmed = window.confirm("Cikis yapmak istedigine emin misin?");
     if (!confirmed) return;
 
-    localStorage.removeItem("goalio_token");
-    localStorage.removeItem("goalio_user");
-    sessionStorage.clear();
+    await performLogout();
     router.push("/login");
     router.refresh();
   };
@@ -77,7 +76,7 @@ export default function HeaderActions({ inline = false, docked = false }) {
           >
             <UserAvatar avatarId={user.avatarId} size="sm" />
             <div className="hidden text-right md:block">
-              <p className="text-[9px] font-black uppercase leading-none italic text-slate-500">Hesabım</p>
+              <p className="text-[9px] font-black uppercase leading-none italic text-slate-500">Hesabim</p>
               <p className="text-xs font-black tracking-tight text-white">{user.username}</p>
             </div>
           </button>
@@ -95,7 +94,7 @@ export default function HeaderActions({ inline = false, docked = false }) {
           onClick={() => router.push("/login")}
           className="rounded-2xl bg-gradient-to-r from-blue-600/80 to-indigo-600/80 px-6 py-3 text-xs font-black uppercase tracking-widest text-white backdrop-blur-sm"
         >
-          Giriş Yap
+          Giris Yap
         </button>
       )}
     </div>
