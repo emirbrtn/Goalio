@@ -15,7 +15,7 @@
 ## 2. Murat Koçgürbüz'ün Gereksinimleri
 * **Kullanıcı Girişi**
 * **Şifre Değiştirme**
-* **Maç Skoru Güncelleme**
+* **Lig Genel Görünümünü Listeleme**
 * **Lig Bazlı Maç Listeleme**
 * **Maç Detayı Görüntüleme**
 * **Takım Bilgisi Görüntüleme**
