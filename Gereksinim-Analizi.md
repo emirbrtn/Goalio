@@ -32,7 +32,7 @@
 * **Maç İstatistiklerini Görüntüleme**
 * **Geçmiş Maçları Listeleme**
 * **Takım ve Oyuncu Arama**
-* **Tahmin Silme (Yapay Zekâ)**
+* **Tahmin Silme**
 
 # Gereksinim Dağılımları
 1. [Emircan Bartan'ın Gereksinimleri](Emircan%20Bartan/Emircan-Bartan-Gereksinimler.md)
