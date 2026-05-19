@@ -15,7 +15,7 @@
 ## 2. Murat Koçgürbüz'ün Gereksinimleri
 * **Kullanıcı Girişi**
 * **Şifre Değiştirme**
-* **Lig Genel Görünümünü Listeleme**
+* **Maç Skoru Güncelleme**
 * **Lig Bazlı Maç Listeleme**
 * **Maç Detayı Görüntüleme**
 * **Takım Bilgisi Görüntüleme**
@@ -31,8 +31,8 @@
 * **Favori Takımları Listeleme**
 * **Maç İstatistiklerini Görüntüleme**
 * **Geçmiş Maçları Listeleme**
-* **Takım ve Oyuncu Arama**
-* **Tahmin Silme**
+* **Maç Arama**
+* **Tahmin Silme (Yapay Zekâ)**
 
 # Gereksinim Dağılımları
 1. [Emircan Bartan'ın Gereksinimleri](Emircan%20Bartan/Emircan-Bartan-Gereksinimler.md)
