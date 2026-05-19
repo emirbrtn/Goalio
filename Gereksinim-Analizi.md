@@ -31,7 +31,7 @@
 * **Favori Takımları Listeleme**
 * **Maç İstatistiklerini Görüntüleme**
 * **Geçmiş Maçları Listeleme**
-* **Maç Arama**
+* **Takım ve Oyuncu Arama**
 * **Tahmin Silme (Yapay Zekâ)**
 
 # Gereksinim Dağılımları
