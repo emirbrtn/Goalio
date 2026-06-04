@@ -1,8 +1,11 @@
 const router = require("express").Router();
 const axios = require("axios");
 const matchController = require("../controllers/matchController");
+const auth = require("../middleware/auth");
 const { syncLeagueData } = require("../services/syncService");
 const { getAllLeagues } = require("../utils/leagueConfig");
+
+axios.defaults.proxy = false;
 
 function mapFixture(fixture) {
   const homeTeam =
@@ -224,6 +227,7 @@ router.get("/", matchController.listMatches);
 router.get("/live", matchController.listLiveMatches);
 router.get("/history", matchController.listHistoryMatches);
 router.get("/search", matchController.searchMatches);
+router.put("/:matchId/score", auth, matchController.updateMatchScore);
 router.get("/:matchId/stats", matchController.getMatchStats);
 
 router.get("/sync/:leagueId", async (req, res) => {
@@ -232,6 +236,217 @@ router.get("/sync/:leagueId", async (req, res) => {
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+async function sendTeamProfile(teamData, token, res) {
+  if (!teamData) {
+    return res.status(404).json({ message: "Takim bulunamadi" });
+  }
+
+  let detailedTeamData = teamData;
+  try {
+    const teamDetailRes = await axios.get(
+      `https://api.sportmonks.com/v3/football/teams/${teamData.id}`,
+      {
+        params: {
+          api_token: token,
+          include: "country;venue;coach;coaches",
+        },
+      },
+    );
+
+    if (teamDetailRes.data?.data) {
+      detailedTeamData = teamDetailRes.data.data;
+    }
+  } catch (error) {
+    console.log("Takim detaylari cekilemedi", error.message);
+  }
+
+  let currentCoach = normalizeCoach(
+    detailedTeamData?.coach ||
+    teamData?.coach ||
+    pickCurrentCoach(detailedTeamData?.coaches || teamData?.coaches),
+  );
+
+  let squad = [];
+  try {
+    const squadRes = await axios.get(`https://api.sportmonks.com/v3/football/squads/teams/${teamData.id}`, {
+      params: {
+        api_token: token,
+        include: "player.position",
+      },
+    });
+    squad = (Array.isArray(squadRes.data?.data) ? squadRes.data.data : []).map((entry) => ({
+      id: entry.player?.id,
+      name: entry.player?.display_name || entry.player?.fullname,
+      image: entry.player?.image_path,
+      position: entry.player?.position?.name || "-",
+      jersey_number: entry.jersey_number,
+    }));
+  } catch (error) {
+    console.log("Kadro cekilemedi", error.message);
+  }
+
+  const activeSeason = pickActiveLeagueSeason(teamData.activeseasons);
+
+  let standings = [];
+  try {
+    if (activeSeason?.id) {
+      const standRes = await axios.get(`https://api.sportmonks.com/v3/football/standings/seasons/${activeSeason.id}`, {
+        params: {
+          api_token: token,
+          include: "participant;details.type",
+        },
+      });
+
+      standings = (Array.isArray(standRes.data?.data) ? standRes.data.data : [])
+        .map((entry) => {
+          const played = readStandingValue(entry, "overall-matches-played");
+          const won = readStandingValue(entry, "overall-won");
+          const draw = readStandingValue(entry, "overall-draw");
+          const lost = readStandingValue(entry, "overall-lost");
+
+          return {
+            position: entry.position,
+            team_name: entry.participant?.name || "Takim",
+            logo: entry.participant?.image_path || "",
+            points: entry.points,
+            played,
+            won,
+            draw,
+            lost,
+          };
+        })
+        .sort((a, b) => a.position - b.position);
+    }
+  } catch (error) {
+    console.log("Puan durumu cekilemedi", error.message);
+  }
+
+  let fixturesData = [];
+
+  const seasonFixtures = await fetchSeasonFixtures(token, activeSeason?.id);
+  fixturesData = seasonFixtures
+    .map(mapFixture)
+    .filter(
+      (fixture) =>
+        String(fixture.homeTeam._id) === String(teamData.id) ||
+        String(fixture.awayTeam._id) === String(teamData.id),
+    );
+
+  if (!currentCoach && seasonFixtures.length > 0) {
+    currentCoach = normalizeCoach(
+      await fetchCoachFromRecentFixtures(token, seasonFixtures, teamData.id),
+    );
+  }
+
+  if (fixturesData.length === 0) {
+    try {
+      const fixtureRes = await axios.get(
+        `https://api.sportmonks.com/v3/football/fixtures/search/${encodeURIComponent(teamData.name)}`,
+        {
+          params: {
+            api_token: token,
+            include: "participants;scores;state;league",
+          },
+        },
+      );
+
+      fixturesData = (Array.isArray(fixtureRes.data?.data) ? fixtureRes.data.data : [])
+        .map(mapFixture)
+        .filter(
+          (fixture) =>
+            String(fixture.homeTeam._id) === String(teamData.id) ||
+            String(fixture.awayTeam._id) === String(teamData.id),
+        );
+    } catch (error) {
+      console.log("Mac verileri cekilemedi", error.message);
+    }
+
+    try {
+      const start = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+      const end = new Date(Date.now() + 180 * 86400000).toISOString().split("T")[0];
+      const currentRes = await axios.get(
+        `https://api.sportmonks.com/v3/football/fixtures/between/${start}/${end}`,
+        {
+          params: {
+            api_token: token,
+            include: "participants;scores;state;league",
+          },
+        },
+      );
+
+      const currentFixtures = (Array.isArray(currentRes.data?.data) ? currentRes.data.data : [])
+        .map(mapFixture)
+        .filter(
+          (fixture) =>
+            String(fixture.homeTeam._id) === String(teamData.id) ||
+            String(fixture.awayTeam._id) === String(teamData.id),
+        );
+
+      fixturesData = Array.from(
+        new Map([...fixturesData, ...currentFixtures].map((fixture) => [fixture._id, fixture])).values(),
+      );
+    } catch (error) {
+      console.log("Guncel fikstur cekilemedi", error.message);
+    }
+  }
+
+  const results = [...fixturesData]
+    .filter((fixture) => fixture.status === "finished")
+    .sort((a, b) => new Date(b.startTime || b.date || 0) - new Date(a.startTime || a.date || 0));
+  const fixtures = [...fixturesData]
+    .filter((fixture) => fixture.status === "scheduled" || fixture.status === "live")
+    .sort((a, b) => new Date(a.startTime || a.date || 0) - new Date(b.startTime || b.date || 0));
+  const topScorers = aggregateTeamTopScorers(seasonFixtures, teamData.id);
+
+  return res.json({
+    team: {
+      id: String(teamData.id),
+      _id: String(teamData.id),
+      name: teamData.name,
+      logo: teamData.image_path || "",
+      country: detailedTeamData.country?.name || teamData.country?.name || "",
+      leagueName: activeSeason?.league?.name || "",
+      stadium: detailedTeamData.venue?.name || teamData.venue?.name || "",
+      city: detailedTeamData.venue?.city_name || teamData.venue?.city_name || "",
+      capacity:
+        Number(detailedTeamData.venue?.capacity || teamData.venue?.capacity) > 0
+          ? Number(detailedTeamData.venue?.capacity || teamData.venue?.capacity)
+          : null,
+      founded:
+        Number(detailedTeamData?.founded || teamData?.founded) > 0
+          ? Number(detailedTeamData?.founded || teamData?.founded)
+          : null,
+      coach: currentCoach,
+    },
+    squad,
+    standings,
+    results,
+    fixtures,
+    topScorers,
+  });
+}
+
+router.get("/team-profile-id/:teamId", async (req, res) => {
+  try {
+    const token = process.env.SPORTSMONKS_API_TOKEN;
+    const teamId = String(req.params.teamId || "").trim();
+
+    const teamRes = await axios.get(
+      `https://api.sportmonks.com/v3/football/teams/${teamId}`,
+      {
+        params: {
+          api_token: token,
+          include: "country;venue;activeseasons.league;coach;coaches",
+        },
+      },
+    );
+
+    return sendTeamProfile(teamRes.data?.data || null, token, res);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -255,195 +470,7 @@ router.get("/team-profile/:name", async (req, res) => {
     const teamData =
       teams.find((team) => String(team.name || "").trim().toLowerCase() === normalizedName) || teams[0];
 
-    if (!teamData) {
-      return res.status(404).json({ message: "Takim bulunamadi" });
-    }
-
-    let detailedTeamData = teamData;
-    try {
-      const teamDetailRes = await axios.get(
-        `https://api.sportmonks.com/v3/football/teams/${teamData.id}`,
-        {
-          params: {
-            api_token: token,
-              include: "country;venue;coach;coaches",
-            },
-          },
-        );
-
-      if (teamDetailRes.data?.data) {
-        detailedTeamData = teamDetailRes.data.data;
-      }
-    } catch (error) {
-      console.log("Takim detaylari cekilemedi", error.message);
-    }
-
-    let currentCoach = normalizeCoach(
-      detailedTeamData?.coach ||
-      teamData?.coach ||
-      pickCurrentCoach(detailedTeamData?.coaches || teamData?.coaches),
-    );
-
-    let squad = [];
-    try {
-      const squadRes = await axios.get(`https://api.sportmonks.com/v3/football/squads/teams/${teamData.id}`, {
-        params: {
-          api_token: token,
-          include: "player.position",
-        },
-      });
-      squad = (Array.isArray(squadRes.data?.data) ? squadRes.data.data : []).map((entry) => ({
-        id: entry.player?.id,
-        name: entry.player?.display_name || entry.player?.fullname,
-        image: entry.player?.image_path,
-        position: entry.player?.position?.name || "-",
-        jersey_number: entry.jersey_number,
-      }));
-    } catch (error) {
-      console.log("Kadro cekilemedi", error.message);
-    }
-
-    const activeSeason = pickActiveLeagueSeason(teamData.activeseasons);
-
-    let standings = [];
-    try {
-      if (activeSeason?.id) {
-        const standRes = await axios.get(`https://api.sportmonks.com/v3/football/standings/seasons/${activeSeason.id}`, {
-          params: {
-            api_token: token,
-            include: "participant;details.type",
-          },
-        });
-
-        standings = (Array.isArray(standRes.data?.data) ? standRes.data.data : [])
-          .map((entry) => {
-            const played = readStandingValue(entry, "overall-matches-played");
-            const won = readStandingValue(entry, "overall-won");
-            const draw = readStandingValue(entry, "overall-draw");
-            const lost = readStandingValue(entry, "overall-lost");
-
-            return {
-              position: entry.position,
-              team_name: entry.participant?.name || "Takim",
-              logo: entry.participant?.image_path || "",
-              points: entry.points,
-              played,
-              won,
-              draw,
-              lost,
-            };
-          })
-          .sort((a, b) => a.position - b.position);
-      }
-    } catch (error) {
-      console.log("Puan durumu cekilemedi", error.message);
-    }
-
-    let fixturesData = [];
-
-    const seasonFixtures = await fetchSeasonFixtures(token, activeSeason?.id);
-    fixturesData = seasonFixtures
-      .map(mapFixture)
-      .filter(
-        (fixture) =>
-          String(fixture.homeTeam._id) === String(teamData.id) ||
-          String(fixture.awayTeam._id) === String(teamData.id),
-      );
-
-    if (!currentCoach && seasonFixtures.length > 0) {
-      currentCoach = normalizeCoach(
-        await fetchCoachFromRecentFixtures(token, seasonFixtures, teamData.id),
-      );
-    }
-
-    if (fixturesData.length === 0) {
-      try {
-        const fixtureRes = await axios.get(
-          `https://api.sportmonks.com/v3/football/fixtures/search/${encodeURIComponent(teamData.name)}`,
-          {
-            params: {
-              api_token: token,
-              include: "participants;scores;state;league",
-            },
-          },
-        );
-
-        fixturesData = (Array.isArray(fixtureRes.data?.data) ? fixtureRes.data.data : [])
-          .map(mapFixture)
-          .filter(
-            (fixture) =>
-              String(fixture.homeTeam._id) === String(teamData.id) ||
-              String(fixture.awayTeam._id) === String(teamData.id),
-          );
-      } catch (error) {
-        console.log("Mac verileri cekilemedi", error.message);
-      }
-
-      try {
-        const start = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
-        const end = new Date(Date.now() + 180 * 86400000).toISOString().split("T")[0];
-        const currentRes = await axios.get(
-          `https://api.sportmonks.com/v3/football/fixtures/between/${start}/${end}`,
-          {
-            params: {
-              api_token: token,
-              include: "participants;scores;state;league",
-            },
-          },
-        );
-
-        const currentFixtures = (Array.isArray(currentRes.data?.data) ? currentRes.data.data : [])
-          .map(mapFixture)
-          .filter(
-            (fixture) =>
-              String(fixture.homeTeam._id) === String(teamData.id) ||
-              String(fixture.awayTeam._id) === String(teamData.id),
-          );
-
-        fixturesData = Array.from(
-          new Map([...fixturesData, ...currentFixtures].map((fixture) => [fixture._id, fixture])).values(),
-        );
-      } catch (error) {
-        console.log("Guncel fikstur cekilemedi", error.message);
-      }
-    }
-
-    const results = [...fixturesData]
-      .filter((fixture) => fixture.status === "finished")
-      .sort((a, b) => new Date(b.startTime || b.date || 0) - new Date(a.startTime || a.date || 0))
-      ;
-    const fixtures = [...fixturesData]
-      .filter((fixture) => fixture.status === "scheduled" || fixture.status === "live")
-      .sort((a, b) => new Date(a.startTime || a.date || 0) - new Date(b.startTime || b.date || 0))
-      ;
-    const topScorers = aggregateTeamTopScorers(seasonFixtures, teamData.id);
-
-    return res.json({
-      team: {
-        id: String(teamData.id),
-        _id: String(teamData.id),
-        name: teamData.name,
-        logo: teamData.image_path || "",
-        country: detailedTeamData.country?.name || teamData.country?.name || "",
-        leagueName: activeSeason?.league?.name || "",
-        stadium: detailedTeamData.venue?.name || teamData.venue?.name || "",
-        city: detailedTeamData.venue?.city_name || teamData.venue?.city_name || "",
-        capacity:
-          Number(detailedTeamData.venue?.capacity || teamData.venue?.capacity) > 0
-            ? Number(detailedTeamData.venue?.capacity || teamData.venue?.capacity)
-            : null,
-        founded:
-          Number(detailedTeamData?.founded || teamData?.founded) > 0
-            ? Number(detailedTeamData?.founded || teamData?.founded)
-            : null,
-        coach: currentCoach,
-      },
-      squad,
-      standings,
-      results,
-      fixtures,
-      topScorers,
-    });
+    return sendTeamProfile(teamData, token, res);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -6,6 +6,8 @@ PORT=${PORT:-5000}
 JWT_SECRET=${JWT_SECRET:-goalio-secret}
 DB_FILE=./data/db.json
 MONGODB_URI=${MONGODB_URI:-mongodb://127.0.0.1:27017/goalio}
+REDIS_URL=${REDIS_URL:-redis://127.0.0.1:6379}
+RABBITMQ_URL=${RABBITMQ_URL:-amqp://127.0.0.1:5672}
 CLIENT_URL=${CLIENT_URL:-http://localhost:3000}
 SPORTSMONKS_API_TOKEN=${SPORTSMONKS_API_TOKEN:-demo_token_not_set}
 EOF

@@ -1,50 +1,25 @@
 # Video Sunum
 
-Bu sayfa final tesliminde istenen tum video linklerinin tek yerde toplanmasi icin hazirlandi.
+## CI-CD ve Docker Kanıt Videosu Tek Video
 
-## Final Icin Zorunlu Videolar
+> **Video Linki:** [Video](https://youtu.be/_1NClxHHxhc)
 
-### 1. Son Sunum Videosu
-- Aciklama: Projenin genel tanitimi, ekip katkisi ve calisan ozelliklerin toplu gosterimi
-- Link:
+## RabbitMQ/Kafka Kanıt Videosu
 
-### 2. CI/CD ve Docker Videosu
-- Aciklama: Jenkins pipeline, Jenkinsfile, frontend ve backend'in Docker uzerinde calistiginin kaniti
-- Link:
+> **Video Linki:** [Emircan Bartan Video ](https://youtu.be/67jQha5FDQc)
 
-## Bireysel Teknoloji Videolari
+> **Video Linki:** [Murat Koçgürbüz Video](https://youtu.be/Lbe-WtYCWI0)
 
-Not: RabbitMQ/Kafka, Redis/Memcached ve Docker+CI/CD kisimlari bireysel isteniyor. Kullanilmadiysa link yerine "Kullanmadim" yazilmali.
+> **Video Linki:** [Onur Eken Video](https://youtu.be/23XOum-5thY)
 
-### Emircan Bartan
-- RabbitMQ veya Kafka:
-- Redis veya Memcached:
-- Docker + CI/CD:
+## Redis/Memcached Kanıt Videosu
 
-### Murat Kocgurbuz
-- RabbitMQ veya Kafka:
-- Redis veya Memcached:
-- Docker + CI/CD:
+> **Video Linki:** [Emircan Bartan Video](https://youtu.be/aPIXHZA3nl8)
 
-### Onur Eken
-- RabbitMQ veya Kafka:
-- Redis veya Memcached:
-- Docker + CI/CD:
+> **Video Linki:** [Murat Koçgürbüz Video](https://youtu.be/Wpeo54i2z5I)
 
-## Video Cekim Kurallari
+> **Video Linki:** [Onur Eken Video](https://youtu.be/fQSO-WQtxzY)
 
-- [ ] Videoda ogrencinin kendi sesi duyuluyor
-- [ ] Once gereksinim adi soyleniyor
-- [ ] Sonra kanit gosteriliyor
-- [ ] Uygulama cihaz veya emulatorde calisiyor
-- [ ] Mobil backend videosunda API istegi net sekilde gorunuyor
-- [ ] Linkler erisilebilir durumda
+## Sunum Videosu (Cep Telefonunda Gösterilmeli, Tüm ekip bir arada)
 
-## CI/CD ve Docker Icin Ders Sunumuna Gore Beklenenler
-
-- Repoda bir `Jenkinsfile` bulunmali
-- Pipeline asamalari videoda gosterilmeli
-- Frontend Docker uzerinde calismali
-- Backend Docker uzerinde calismali
-- Lokal ortamda calismasi yeterli
-- CI/CD ve Docker birlikte degerlendirilecek; biri eksikse puan gelmeyebilir
+> **Video Linki:** [Sunum videosu linki buraya eklenecek](#)
