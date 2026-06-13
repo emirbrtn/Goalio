@@ -7,6 +7,7 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "amqplib": "^0.10.9",
     "axios": "^1.14.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -15,7 +16,8 @@
     "jsonwebtoken": "^9.0.2",
     "lowdb": "^7.0.1",
     "mongoose": "^9.3.3",
-    "nanoid": "^5.0.7"
+    "nanoid": "^5.0.7",
+    "redis": "^5.12.1"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.27",

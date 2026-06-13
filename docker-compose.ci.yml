@@ -2,6 +2,12 @@ services:
   mongodb:
     ports: []
 
+  redis:
+    ports: []
+
+  rabbitmq:
+    ports: []
+
   backend:
     ports: []
 

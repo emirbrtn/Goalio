@@ -1,9 +1,22 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { nanoid } = require("nanoid");
 
 const User = require("../models/User");
 const UserNotification = require("../models/UserNotification");
 const UserPrediction = require("../models/UserPrediction");
+const { blacklistToken } = require("../utils/tokenBlacklist");
+const { publishUserEvent } = require("../utils/userEventPublisher");
+const {
+  cacheActiveSession,
+  cacheAuthUser,
+  cachePublicUser,
+  deleteActiveSession,
+  deleteCachedAuthUser,
+  deleteCachedPublicUser,
+  getCachedAuthUser,
+  getCachedPublicUser,
+} = require("../utils/userRedisStore");
 
 const defaultNotifications = {
   predictionResolved: true,
@@ -35,7 +48,7 @@ const signToken = (user) =>
   jwt.sign(
     { id: toPublicUserId(user), username: user.username },
     process.env.JWT_SECRET || "goalio-secret",
-    { expiresIn: "7d" },
+    { expiresIn: "7d", jwtid: nanoid() },
   );
 
 function requireSameUser(req, res) {
@@ -62,6 +75,22 @@ function sanitizeUser(user) {
       ...(user.notifications || {}),
     },
   };
+}
+
+async function refreshUserRedis(user, previousEmail = "") {
+  const publicUser = sanitizeUser(user);
+
+  await cachePublicUser(publicUser);
+  await cacheAuthUser(user);
+
+  const normalizedPreviousEmail = String(previousEmail || "").trim().toLowerCase();
+  const normalizedCurrentEmail = String(user?.email || "").trim().toLowerCase();
+
+  if (normalizedPreviousEmail && normalizedPreviousEmail !== normalizedCurrentEmail) {
+    await deleteCachedAuthUser(normalizedPreviousEmail);
+  }
+
+  return publicUser;
 }
 
 function sanitizeNotification(notification) {
@@ -170,9 +199,18 @@ exports.register = async (req, res) => {
       createdOn: new Date().toISOString(),
     });
 
+    const publicUser = await refreshUserRedis(user);
+    const token = signToken(user);
+    await cacheActiveSession(token, publicUser);
+    await publishUserEvent("user.registered", {
+      userId: publicUser.id,
+      username: publicUser.username,
+      email: publicUser.email,
+    });
+
     return res.status(201).json({
-      token: signToken(user),
-      user: sanitizeUser(user),
+      token,
+      user: publicUser,
     });
   } catch (error) {
     return res.status(500).json({ message: "Sistem hatasi: " + error.message });
@@ -184,7 +222,8 @@ exports.login = async (req, res) => {
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
 
-    const user = await User.findOne({ email });
+    const cachedUser = await getCachedAuthUser(email);
+    const user = cachedUser || (await User.findOne({ email }));
     if (!user) {
       return res.status(401).json({ message: "Boyle bir kullanici bulunamadi." });
     }
@@ -194,9 +233,18 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Sifreniz hatali." });
     }
 
+    const publicUser = await refreshUserRedis(user);
+    const token = signToken(user);
+    await cacheActiveSession(token, publicUser);
+    await publishUserEvent("user.logged_in", {
+      userId: publicUser.id,
+      username: publicUser.username,
+      email: publicUser.email,
+    });
+
     return res.json({
-      token: signToken(user),
-      user: sanitizeUser(user),
+      token,
+      user: publicUser,
     });
   } catch (error) {
     return res.status(500).json({ message: "Sistem hatasi: " + error.message });
@@ -206,12 +254,18 @@ exports.login = async (req, res) => {
 exports.getUserProfile = async (req, res) => {
   if (!requireSameUser(req, res)) return;
 
+  const cachedUser = await getCachedPublicUser(req.params.id);
+  if (cachedUser) {
+    return res.json(cachedUser);
+  }
+
   const user = await resolveUser(req.params.id);
   if (!user) {
     return res.status(404).json({ message: "Kullanici bulunamadi" });
   }
 
-  return res.json(sanitizeUser(user));
+  const publicUser = await refreshUserRedis(user);
+  return res.json(publicUser);
 };
 
 exports.updateUserProfile = async (req, res) => {
@@ -243,12 +297,19 @@ exports.updateUserProfile = async (req, res) => {
     return res.status(400).json({ message: "Bu e-posta adresi zaten kullanimda." });
   }
 
+  const previousEmail = user.email;
   user.username = username;
   user.email = email;
   user.avatarId = avatarId && allowedAvatarIds.has(avatarId) ? avatarId : user.avatarId || defaultAvatarId;
   await user.save();
 
-  return res.json(sanitizeUser(user));
+  const publicUser = await refreshUserRedis(user, previousEmail);
+  await publishUserEvent("user.profile_updated", {
+    userId: publicUser.id,
+    username: publicUser.username,
+    email: publicUser.email,
+  });
+  return res.json(publicUser);
 };
 
 exports.updateNotificationPrefs = async (req, res) => {
@@ -264,6 +325,13 @@ exports.updateNotificationPrefs = async (req, res) => {
     ...(req.body || {}),
   };
   await user.save();
+  await refreshUserRedis(user);
+  await publishUserEvent("user.notification_prefs_updated", {
+    userId: toPublicUserId(user),
+    username: user.username,
+    email: user.email,
+    notifications: user.notifications,
+  });
 
   return res.json(user.notifications);
 };
@@ -391,6 +459,15 @@ exports.changePassword = async (req, res) => {
 
   user.passwordHash = await bcrypt.hash(newPassword, 10);
   await user.save();
+  await deleteCachedAuthUser(user.email);
+  await deleteCachedPublicUser(toPublicUserId(user));
+  await deleteActiveSession(String(req.token || "").trim());
+  await blacklistToken(String(req.token || "").trim());
+  await publishUserEvent("user.password_changed", {
+    userId: toPublicUserId(user),
+    username: user.username,
+    email: user.email,
+  });
   return res.status(204).send();
 };
 
@@ -406,11 +483,27 @@ exports.deleteUser = async (req, res) => {
   await UserPrediction.deleteMany({ userId: publicId });
   await UserNotification.deleteMany({ userId: publicId });
   await User.deleteOne({ _id: user._id });
+  await deleteCachedAuthUser(user.email);
+  await deleteCachedPublicUser(publicId);
+  await deleteActiveSession(String(req.token || "").trim());
+  await blacklistToken(String(req.token || "").trim());
 
   return res.json({ message: "Hesap silindi" });
 };
 
-exports.logout = async (req, res) => res.status(200).json({ message: "Cikis basarili" });
+exports.logout = async (req, res) => {
+  const blacklisted = await blacklistToken(String(req.token || "").trim());
+  await deleteActiveSession(String(req.token || "").trim());
+  await publishUserEvent("user.logged_out", {
+    userId: String(req.user?.id || ""),
+    username: req.user?.username || "",
+  });
+
+  return res.status(200).json({
+    message: "Cikis basarili",
+    redis: blacklisted ? "jwt_blacklisted" : "redis_unavailable",
+  });
+};
 
 exports.listFavoriteTeams = async (req, res) => {
   if (!requireSameUser(req, res)) return;
@@ -437,6 +530,13 @@ exports.addFavoriteTeam = async (req, res) => {
   if (!currentFavorites.includes(teamId)) {
     user.favorites = [...currentFavorites, teamId];
     await user.save();
+    await refreshUserRedis(user);
+    await publishUserEvent("user.favorite_added", {
+      userId: toPublicUserId(user),
+      username: user.username,
+      email: user.email,
+      teamId,
+    });
   }
 
   return res.json({ message: "Eklendi" });
@@ -450,6 +550,7 @@ exports.removeFavoriteTeam = async (req, res) => {
     const currentFavorites = Array.isArray(user.favorites) ? user.favorites.map(String) : [];
     user.favorites = currentFavorites.filter((favorite) => favorite !== String(req.params.teamId));
     await user.save();
+    await refreshUserRedis(user);
   }
 
   return res.status(204).send();
@@ -477,9 +578,48 @@ exports.updateUserFavoritesData = async (req, res) => {
     return res.status(404).json({ message: "Kullanici bulunamadi" });
   }
 
-  user.favoriteTeams = Array.isArray(req.body?.teams) ? req.body.teams : [];
-  user.favoritePlayers = Array.isArray(req.body?.players) ? req.body.players : [];
+  const previousTeams = Array.isArray(user.favoriteTeams) ? user.favoriteTeams : [];
+  const previousPlayers = Array.isArray(user.favoritePlayers) ? user.favoritePlayers : [];
+  const nextTeams = Array.isArray(req.body?.teams) ? req.body.teams : [];
+  const nextPlayers = Array.isArray(req.body?.players) ? req.body.players : [];
+
+  const previousTeamKeys = new Set(
+    previousTeams.map((team) => String(team?.id || team?._id || team?.name || "").trim().toLowerCase()),
+  );
+  const previousPlayerKeys = new Set(
+    previousPlayers.map((player) => String(player?.id || player?._id || player?.name || "").trim().toLowerCase()),
+  );
+
+  user.favoriteTeams = nextTeams;
+  user.favoritePlayers = nextPlayers;
   await user.save();
+  await refreshUserRedis(user);
+
+  for (const team of nextTeams) {
+    const teamKey = String(team?.id || team?._id || team?.name || "").trim().toLowerCase();
+    if (!teamKey || previousTeamKeys.has(teamKey)) continue;
+
+    await publishUserEvent("user.favorite_added", {
+      userId: toPublicUserId(user),
+      username: user.username,
+      email: user.email,
+      teamId: String(team?.id || team?._id || "").trim(),
+      teamName: String(team?.name || "").trim(),
+    });
+  }
+
+  for (const player of nextPlayers) {
+    const playerKey = String(player?.id || player?._id || player?.name || "").trim().toLowerCase();
+    if (!playerKey || previousPlayerKeys.has(playerKey)) continue;
+
+    await publishUserEvent("user.favorite_player_added", {
+      userId: toPublicUserId(user),
+      username: user.username,
+      email: user.email,
+      playerId: String(player?.id || player?._id || "").trim(),
+      playerName: String(player?.name || "").trim(),
+    });
+  }
 
   return res.json({
     teams: user.favoriteTeams,

@@ -1,5 +1,6 @@
 const { getLeagueByKey } = require("../utils/leagueConfig");
 const { normalizeMatchState } = require("../utils/matchState");
+const Match = require("../models/Match");
 
 const memoryCache = {};
 const CACHE_TIME_MS = 2 * 60 * 1000;
@@ -109,6 +110,56 @@ function mapSportsmonksMatch(match) {
     },
     sportsmonkData: match,
   };
+}
+
+function mergeMatchOverride(baseMatch, override) {
+  if (!baseMatch || !override) return baseMatch;
+
+  const status = override.status || baseMatch.status;
+  const nextHomeScore =
+    override?.score?.home != null ? Number(override.score.home) : baseMatch?.score?.home;
+  const nextAwayScore =
+    override?.score?.away != null ? Number(override.score.away) : baseMatch?.score?.away;
+
+  return {
+    ...baseMatch,
+    league: override.league || baseMatch.league,
+    status,
+    date: override.date ? new Date(override.date).toISOString() : baseMatch.date,
+    startTime: override.date ? new Date(override.date).toISOString() : baseMatch.startTime,
+    homeTeam: {
+      ...baseMatch.homeTeam,
+      ...(override.homeTeam?.name ? { name: override.homeTeam.name } : {}),
+      ...(override.homeTeam?.logo ? { logo: override.homeTeam.logo } : {}),
+      ...(override.homeTeam?.id ? { _id: String(override.homeTeam.id) } : {}),
+    },
+    awayTeam: {
+      ...baseMatch.awayTeam,
+      ...(override.awayTeam?.name ? { name: override.awayTeam.name } : {}),
+      ...(override.awayTeam?.logo ? { logo: override.awayTeam.logo } : {}),
+      ...(override.awayTeam?.id ? { _id: String(override.awayTeam.id) } : {}),
+    },
+    score: {
+      home: status === "scheduled" ? null : (Number.isFinite(nextHomeScore) ? nextHomeScore : 0),
+      away: status === "scheduled" ? null : (Number.isFinite(nextAwayScore) ? nextAwayScore : 0),
+    },
+    lineups: Array.isArray(override.lineups) && override.lineups.length > 0 ? override.lineups : baseMatch.lineups,
+  };
+}
+
+async function applyStoredOverrides(matches = []) {
+  const safeMatches = Array.isArray(matches) ? matches : [];
+  const ids = safeMatches
+    .map((match) => Number(match?._id || 0))
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  if (ids.length === 0) return safeMatches;
+
+  const overrides = await Match.find({ apiId: { $in: ids } }).lean();
+  if (!Array.isArray(overrides) || overrides.length === 0) return safeMatches;
+
+  const overrideMap = new Map(overrides.map((item) => [String(item.apiId), item]));
+  return safeMatches.map((match) => mergeMatchOverride(match, overrideMap.get(String(match?._id || ""))));
 }
 
 function firstNumericValue(values = []) {
@@ -236,6 +287,7 @@ exports.listMatches = async (req, res) => {
     if (!Array.isArray(apiMatches)) apiMatches = apiMatches ? [apiMatches] : [];
 
     let mapped = apiMatches.map(mapSportsmonksMatch).filter(Boolean);
+    mapped = await applyStoredOverrides(mapped);
     mapped = filterByLeague(mapped, req.query.league);
 
     return res.json(paginate(sortByStartTime(mapped), req.query.page, req.query.limit));
@@ -252,7 +304,7 @@ exports.listLiveMatches = async (req, res) => {
     if (!Array.isArray(apiMatches)) apiMatches = apiMatches ? [apiMatches] : [];
 
     const liveMatches = filterByLeague(
-      apiMatches.map(mapSportsmonksMatch).filter(isActiveLiveMatch),
+      await applyStoredOverrides(apiMatches.map(mapSportsmonksMatch).filter(isActiveLiveMatch)),
       req.query.league,
     );
 
@@ -272,7 +324,7 @@ exports.listHistoryMatches = async (req, res) => {
     if (!Array.isArray(apiMatches)) apiMatches = apiMatches ? [apiMatches] : [];
 
     const history = filterByLeague(
-      apiMatches.map(mapSportsmonksMatch).filter((match) => match && match.status === "finished"),
+      await applyStoredOverrides(apiMatches.map(mapSportsmonksMatch).filter((match) => match && match.status === "finished")),
       req.query.league,
     );
 
@@ -311,14 +363,74 @@ exports.searchMatches = async (req, res) => {
         );
       });
 
-    const uniqueMatches = Array.from(new Map(combined.map((match) => [match._id, match])).values());
+    const uniqueMatches = await applyStoredOverrides(
+      Array.from(new Map(combined.map((match) => [match._id, match])).values()),
+    );
     return res.json(paginate(sortByStartTime(uniqueMatches, "desc"), req.query.page, req.query.limit));
   } catch (error) {
     return res.status(500).json({ message: "Arama API Hatasi" });
   }
 };
 
-exports.updateMatchScore = async (req, res) => res.json({ message: "Okuma modu aktif" });
+exports.updateMatchScore = async (req, res) => {
+  try {
+    const matchId = Number(req.params.matchId || 0);
+    const home = Number(req.body?.home);
+    const away = Number(req.body?.away);
+    const status = String(req.body?.status || "").trim();
+
+    if (!Number.isFinite(matchId) || matchId <= 0) {
+      return res.status(400).json({ message: "Gecersiz mac kimligi" });
+    }
+
+    if (!Number.isFinite(home) || !Number.isFinite(away) || home < 0 || away < 0) {
+      return res.status(400).json({ message: "Skor degerleri gecersiz" });
+    }
+
+    const nextStatus = ["scheduled", "live", "finished"].includes(status) ? status : "finished";
+
+    const currentMatch = await fetchFromSportsmonks(`fixtures/${matchId}`, {
+      maxPages: 1,
+      cacheTimeMs: 0,
+    });
+    const fixture = Array.isArray(currentMatch) ? currentMatch[0] : currentMatch;
+    const mapped = mapSportsmonksMatch(fixture || { id: matchId });
+
+    const saved = await Match.findOneAndUpdate(
+      { apiId: matchId },
+      {
+        apiId: matchId,
+        league: mapped?.league || "",
+        homeTeam: {
+          id: Number(mapped?.homeTeam?._id || 0),
+          name: mapped?.homeTeam?.name || "Ev Sahibi",
+          logo: mapped?.homeTeam?.logo || "",
+        },
+        awayTeam: {
+          id: Number(mapped?.awayTeam?._id || 0),
+          name: mapped?.awayTeam?.name || "Deplasman",
+          logo: mapped?.awayTeam?.logo || "",
+        },
+        score: { home, away },
+        status: nextStatus,
+        date: mapped?.startTime ? new Date(mapped.startTime) : new Date(),
+        lineups: Array.isArray(mapped?.lineups) ? mapped.lineups : [],
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    ).lean();
+
+    return res.json({
+      message: "Mac skoru guncellendi",
+      match: {
+        apiId: String(saved.apiId),
+        score: saved.score,
+        status: saved.status,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Mac skoru guncellenemedi" });
+  }
+};
 exports.debugSportsApi = async (req, res) => res.json({ status: "Aktif" });
 
 exports.getMatch = async (req, res) => {
@@ -367,7 +479,7 @@ exports.getMatch = async (req, res) => {
     const state = matchData.state?.state || "NS";
     const status = normalizeMatchState(state);
 
-    return res.json({
+    const responsePayload = {
       _id: String(matchData.id),
       league: matchData.league?.name || "Bilinmiyor",
       status,
@@ -407,7 +519,10 @@ exports.getMatch = async (req, res) => {
       statistics: matchData.statistics || [],
       lineups: matchData.lineups || [],
       events: matchData.events || [],
-    });
+    };
+
+    const override = await Match.findOne({ apiId: Number(req.params.matchId || 0) }).lean();
+    return res.json(mergeMatchOverride(responsePayload, override));
   } catch (error) {
     return res.status(500).json({ message: "Detay API Hatasi" });
   }

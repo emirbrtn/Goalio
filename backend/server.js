@@ -5,8 +5,25 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 const app = require("./src/app");
 const { ensureDb } = require("./src/utils/db");
 const { migrateLegacyData } = require("./src/utils/legacyMigration");
+const { connectRedis } = require("./src/utils/redisClient");
+const { connectRabbitMq } = require("./src/utils/rabbitmq");
+const { startUserEventConsumer } = require("./src/utils/userEventConsumer");
 
 const PORT = process.env.PORT || 5000;
+const RABBIT_RETRY_DELAY_MS = 5000;
+
+async function bootstrapRabbitMqConsumer() {
+  const connection = await connectRabbitMq();
+  if (!connection) {
+    setTimeout(bootstrapRabbitMqConsumer, RABBIT_RETRY_DELAY_MS);
+    return;
+  }
+
+  const started = await startUserEventConsumer();
+  if (!started) {
+    setTimeout(bootstrapRabbitMqConsumer, RABBIT_RETRY_DELAY_MS);
+  }
+}
 
 // BAŞLANGIÇ KONTROLÜ
 console.log("-----------------------------------------");
@@ -20,7 +37,9 @@ console.log("-----------------------------------------");
 
 ensureDb().then(async () => {
   await migrateLegacyData();
+  await connectRedis();
   app.listen(PORT, () =>
     console.log(`Goalio API running on http://localhost:${PORT}`),
   );
+  bootstrapRabbitMqConsumer();
 });
