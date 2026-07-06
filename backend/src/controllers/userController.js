@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { nanoid } = require("nanoid");
+const { randomUUID } = require("crypto");
 
 const User = require("../models/User");
 const UserNotification = require("../models/UserNotification");
@@ -48,7 +48,7 @@ const signToken = (user) =>
   jwt.sign(
     { id: toPublicUserId(user), username: user.username },
     process.env.JWT_SECRET || "goalio-secret",
-    { expiresIn: "7d", jwtid: nanoid() },
+    { expiresIn: "7d", jwtid: randomUUID() },
   );
 
 function requireSameUser(req, res) {

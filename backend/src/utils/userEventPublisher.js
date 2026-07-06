@@ -1,4 +1,4 @@
-const { nanoid } = require("nanoid");
+const { randomUUID } = require("crypto");
 
 const { USER_EVENT_EXCHANGE, getRabbitChannel } = require("./rabbitmq");
 
@@ -7,7 +7,7 @@ async function publishUserEvent(type, payload) {
   if (!channel) return false;
 
   const event = {
-    id: nanoid(),
+    id: randomUUID(),
     type,
     occurredAt: new Date().toISOString(),
     payload,
