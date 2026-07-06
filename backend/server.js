@@ -52,9 +52,9 @@ async function bootstrapOptionalServices(options = {}) {
   }
 }
 
-module.exports = app;
-module.exports.default = app;
-module.exports.app = app;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = app;
+exports.app = app;
 
 if (require.main === module && !isVercelServerless) {
   app.listen(PORT, () =>
