@@ -3,7 +3,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const app = require("./src/app");
-const { ensureDb } = require("./src/utils/db");
+const { ensureDb } = require("./src/utils/dbRuntime");
 const { migrateLegacyData } = require("./src/utils/legacyMigration");
 const { connectRedis } = require("./src/utils/redisClient");
 const { connectRabbitMq } = require("./src/utils/rabbitmq");
@@ -35,11 +35,20 @@ if (token) {
 }
 console.log("-----------------------------------------");
 
-ensureDb().then(async () => {
-  await migrateLegacyData();
+app.listen(PORT, () =>
+  console.log(`Goalio API running on http://localhost:${PORT}`),
+);
+
+async function bootstrapOptionalServices() {
+  try {
+    await ensureDb();
+    await migrateLegacyData();
+  } catch (error) {
+    console.error("MongoDB baslangic baglantisi kurulamadi:", error.message);
+  }
+
   await connectRedis();
-  app.listen(PORT, () =>
-    console.log(`Goalio API running on http://localhost:${PORT}`),
-  );
   bootstrapRabbitMqConsumer();
-});
+}
+
+bootstrapOptionalServices();
