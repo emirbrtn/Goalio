@@ -11,7 +11,7 @@ async function syncLeagueData(leagueId) {
         const response = await axios.get(`https://api.sportmonks.com/v3/football/fixtures`, {
             params: {
                 api_token: TOKEN,
-                filters: `fixtureLeagues:${leagueId}`, 
+                filters: `leagues:${leagueId}`, 
                 include: 'participants;league;scores'
             }
         });

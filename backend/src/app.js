@@ -12,7 +12,24 @@ const app = express();
 
 app.use(cors({ origin: process.env.CLIENT_URL || "*" }));
 app.use(express.json());
+
+function canServeWithoutDb(req) {
+  if (req.method !== "GET") return false;
+
+  return (
+    req.path === "/" ||
+    req.path.startsWith("/matches") ||
+    req.path.startsWith("/teams") ||
+    req.path.startsWith("/players") ||
+    req.path.startsWith("/predictions")
+  );
+}
+
 app.use((req, res, next) => {
+  if (canServeWithoutDb(req)) {
+    return next();
+  }
+
   ensureDb()
     .then(() => next())
     .catch((error) => {
