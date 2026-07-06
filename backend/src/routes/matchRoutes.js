@@ -365,7 +365,7 @@ async function sendTeamProfile(teamData, token, res) {
     }
 
     try {
-      const start = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+      const start = new Date(Date.now() - 180 * 86400000).toISOString().split("T")[0];
       const end = new Date(Date.now() + 180 * 86400000).toISOString().split("T")[0];
       const currentRes = await axios.get(
         `https://api.sportmonks.com/v3/football/fixtures/between/${start}/${end}`,
