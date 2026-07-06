@@ -52,9 +52,11 @@ async function bootstrapOptionalServices(options = {}) {
   }
 }
 
-if (isVercelServerless) {
-  module.exports = app;
-} else {
+module.exports = app;
+module.exports.default = app;
+module.exports.app = app;
+
+if (require.main === module && !isVercelServerless) {
   app.listen(PORT, () =>
     console.log(`Goalio API running on http://localhost:${PORT}`),
   );
