@@ -11,6 +11,7 @@ const { startUserEventConsumer } = require("./src/utils/userEventConsumer");
 
 const PORT = process.env.PORT || 5000;
 const RABBIT_RETRY_DELAY_MS = 5000;
+const isVercelServerless = process.env.VERCEL === "1";
 
 async function bootstrapRabbitMqConsumer() {
   const connection = await connectRabbitMq();
@@ -35,11 +36,9 @@ if (token) {
 }
 console.log("-----------------------------------------");
 
-app.listen(PORT, () =>
-  console.log(`Goalio API running on http://localhost:${PORT}`),
-);
+async function bootstrapOptionalServices(options = {}) {
+  const { startConsumers = true } = options;
 
-async function bootstrapOptionalServices() {
   try {
     await ensureDb();
     await migrateLegacyData();
@@ -48,7 +47,16 @@ async function bootstrapOptionalServices() {
   }
 
   await connectRedis();
-  bootstrapRabbitMqConsumer();
+  if (startConsumers) {
+    bootstrapRabbitMqConsumer();
+  }
 }
 
-bootstrapOptionalServices();
+if (isVercelServerless) {
+  module.exports = app;
+} else {
+  app.listen(PORT, () =>
+    console.log(`Goalio API running on http://localhost:${PORT}`),
+  );
+  bootstrapOptionalServices();
+}
